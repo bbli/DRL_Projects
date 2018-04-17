@@ -122,7 +122,7 @@ if __name__ == "__main__":
                     #########################
                     loss.backward()
                     optimizer.step()
-                    #########################
+                    ################################################################
                     after_weights =weightMag(net)
                     relDiff_list = relDiff(before_weights,after_weights)
                     relDiff_dict = listToDict(relDiff_list)

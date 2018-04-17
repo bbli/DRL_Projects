@@ -25,14 +25,30 @@ def valScorer(test_loader,model,criterion):
     val_loss = val_loss/count
     return val_loss
 
-def weightSum(layer,net):
-    params = net.parameters()
-    for _ in range(layer-1):
-        trash = next(params)
-    return float(next(params).sum().data.numpy())
+def weightMag(net):
+    layer_list =[]
+    for param in net.parameters():
+        mag = (param*param).sum().sqrt()
+        mag = float(mag.data.numpy())
+        layer_list.append(mag) 
+    return layer_list
 
-def relDiff(a,b):
+################################################################
+def relDiff(list1,list2):
+    l=[]
+    for a,b in zip(list1,list2):
+        l.append(relDiffHelper(a,b))
+    return l
+
+def relDiffHelper(a,b):
     return abs(a-b)/abs(a)
+################################################################
+
+def listToDict(l):
+    new_dict ={}
+    for i,item in enumerate(l):
+        new_dict[str(i)]=item
+    return new_dict
 
 from sklearn.preprocessing import StandardScaler
 

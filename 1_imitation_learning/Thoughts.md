@@ -43,10 +43,9 @@
 > learn about value iteration on MDP2
 
 > how does weight decay promote smoothness
-* use tensorboard to see loss and weight update ratio
-    * also text regarding network parameters
-
-* create better measure for weight update ratio
+> use tensorboard to see loss and weight update ratio
+* also text regarding network parameters
+> create better measure for weight update ratio
 
 * test whether or not smaller networks mean larger weight updates
 
