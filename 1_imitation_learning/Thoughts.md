@@ -43,10 +43,13 @@
 > learn about value iteration on MDP2
 
 > how does weight decay promote smoothness
-* get ipython to work with gym
 * use tensorboard to see loss and weight update ratio
     * also text regarding network parameters
 
+* create better measure for weight update ratio
+
 * test whether or not smaller networks mean larger weight updates
+
+
 * learn how to define my own loss function(see ML Improvers)
     * this guy defines a dice coefficient loss function subclassing from `nn.Module` not `torch.autograd.Function`. What is the difference?
