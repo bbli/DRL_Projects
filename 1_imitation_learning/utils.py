@@ -41,7 +41,7 @@ def relDiff(list1,list2):
     return l
 
 def relDiffHelper(a,b):
-    return abs(a-b)/abs(a)
+    return float(abs(a-b)/abs(a))
 ################################################################
 
 def listToDict(l):
