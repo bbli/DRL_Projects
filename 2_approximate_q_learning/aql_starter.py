@@ -61,11 +61,12 @@ count =0
 random_count =0
 num_episodes = 2000
 max_steps = 99
-# w = SummaryWriter()
+w = SummaryWriter()
 observations_list=[]
 actions_list=[]
 rewards_list =[]
 random_q_table = np.zeros([env.observation_space.n,env.action_space.n])
+count =0
 for episode in range(num_episodes):
     
     # Reset environment and get first new observation
@@ -84,7 +85,7 @@ for episode in range(num_episodes):
     optimizer = torch.optim.SGD(q_function.parameters(),lr=learn_rate)
     #The Q-Network
     while step < max_steps:
-                    
+        count +=1             
         step += 1
 
         # the following two lines should be commented out during the training to speed the learning process
@@ -112,14 +113,14 @@ for episode in range(num_episodes):
         # target_q_value = getTarget(new_observation_state,q_function,reward)
         target_q_value = getTarget2(new_observation_state,q_function,reward)
         # ipdb.set_trace()
-        ################### **Prepping Data apple Model** #########################
+        ################### **Prepping Data Model** #########################
 
         target_q_value = tensorFormat(torch.FloatTensor(target_q_value))
 
         ################### **Updating Model** #########################
         count += 1
         # ipdb.set_trace()
-        before_weights = weightMag(q_function)
+        # before_weights = weightMag(q_function)
         #########################
         optimizer.zero_grad()
         observation_state = tensorFormat(torch.FloatTensor(observation_state)) 
@@ -127,14 +128,14 @@ for episode in range(num_episodes):
         output = outputs[0,action]
         loss = criterion(output,target_q_value)
 
-        # w.add_scalar('Loss', loss.data[0],count)
+        w.add_scalar('Loss', loss.data[0],count)
         # print("Loss value: {}".format(loss.data[0]))
 
 
         loss.backward()
         optimizer.step()
         #########################
-        after_weights =weightMag(q_function)
+        # after_weights =weightMag(q_function)
         # relDiff_list = relDiff(before_weights,after_weights)
         # relDiff_dict = listToDict(relDiff_list)
         # w.add_scalars('LayerChanges',relDiff_dict,count)
@@ -145,6 +146,9 @@ for episode in range(num_episodes):
         observation = observation_new
         actions_list.append(int(action))
         observations_list.append(int(observation))
+        w.add_scalar('Observations',observation,count)
+        w.add_scalar('Action',action,count)
+        # w.add_histogram('Observations Distribution',observation)
         
         if done == True:
             #Reduce chance of random action as we train the model.
@@ -152,8 +156,10 @@ for episode in range(num_episodes):
             print("rewards are {}".format(rewards))
             break
     rewards_list.append(rewards)
+    w.add_scalar('Reward',rewards,episode)
 # print("Percentage of random actions: {}".format(random_count/(total_step)))
-# w.close()
+# w.add_histogram('Observations Distribution',np.array([observations_list]))
+w.close()
 print(next(q_function.parameters()))
 
 sa_dict = {'state':observations_list,'action':actions_list}
