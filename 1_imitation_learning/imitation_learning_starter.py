@@ -58,103 +58,102 @@ class Net(nn.Module):
 
 
 
-if __name__ == "__main__":
-    # create environment
-    env = gym.make('MountainCar-v0')
+# create environment
+env = gym.make('MountainCar-v0')
 
-    print("hi")
-    print(env.action_space) # 3 actions: push left, no push, push right
-    print(env.observation_space) # 2 observations: position, velocity 
-    print(env.observation_space.high) # max position & velocity: 0.6, 0.07
-    print(env.observation_space.low) # min position & velocity: -1.2, -0.07
-    print("hello")
+print("hi")
+print(env.action_space) # 3 actions: push left, no push, push right
+print(env.observation_space) # 2 observations: position, velocity 
+print(env.observation_space.high) # max position & velocity: 0.6, 0.07
+print(env.observation_space.low) # min position & velocity: -1.2, -0.07
+print("hello")
 
-    ################### **Initializing Network Objects** #########################
-    net = Net().double()
-    net.weightInitialization()
-    net.train()
-    # optimizer = optim.Adam(net.parameters(),lr=9e-1, weight_decay =0)
-    criterion = nn.CrossEntropyLoss()
-    lr_generator = LRGenerator()
+################### **Initializing Network Objects** #########################
+net = Net().double()
+# net.weightInitialization()
+net.train()
+print(net)
+# optimizer = optim.Adam(net.parameters(),lr=9e-1, weight_decay =0)
+criterion = nn.CrossEntropyLoss()
+lr_generator = LRGenerator()
+
+count =0
+# with SummaryWriter('L/run5') as w:
+w = SummaryWriter()
+w.add_text('Text',str(net))
+for episode in range(num_episodes):
+    ################### **Getting and formatting the human trained data** #########################
+    observations, actions = dataCollector(env)
+    observations, actions = np.array(observations), np.array(actions)
+    # pdb.set_trace()
+    # observations,actions = balanceDataset(observations,actions)
+    # scalar = Standarize()
+    # observations = scalar(observations)
+    # print("Observation mean: {}".format(observations.mean()))
+    # print("Observation std: {}".format(observations.std()))
+    observations, actions = torch.DoubleTensor(observations), torch.LongTensor(actions)
+    observations, actions = tensor_format(observations), tensor_format(actions)
+
+    ################### **Training the Network** #########################
+    learn_rate = next(lr_generator)
+    optimizer = optim.SGD(net.parameters(),lr=learn_rate,momentum=0.90, nesterov=True,weight_decay=1e-4)
+    printModel(net,optimizer)
+
+    train_iterations=3
+    for i in range(train_iterations):
+        count += 1
+        # ipdb.set_trace()
+        before_weights = weightMag(net)
+        ################################################################
+        optimizer.zero_grad()
+        #########################
+        outputs = net(observations)
+
+        acc = score(outputs,actions)
+        w.add_scalar('Accuracy', acc,count)
+        print("Accuracy: {}".format(acc))
+        #########################
+        loss = criterion(outputs, actions)
+
+        w.add_scalar('Loss', loss.data[0],count)
+        print("Loss value: {}".format(loss))
+        #########################
+        loss.backward()
+        optimizer.step()
+        ################################################################
+        after_weights =weightMag(net)
+        relDiff_list = relDiff(before_weights,after_weights)
+        relDiff_dict = listToDict(relDiff_list)
+        w.add_scalars('LayerChanges',relDiff_dict,count)
+
+        print("Network updated!")
+
+w.close()
+################### **Evaluating Network** #########################
+
+observation = env.reset()
+done = False
+step = 0
+test_actions = []
+test_observations = [] 
+net.eval()
+
+while not done:
+    env.render()
+    # print(observation)
     
-    count =0
-    with SummaryWriter('L/run2') as w:
-        w.add_text('Parameter',"this is a 1 hidden layer neural net")
-        w.add_text('Parameters',str(net))
-        for episode in range(num_episodes):
-                    
-                ################### **Getting and formatting the human trained data** #########################
-                
-                observations, actions = dataCollector(env)
-                observations, actions = np.array(observations), np.array(actions)
-                # pdb.set_trace()
-                observations,actions = balanceDataset(observations,actions)
-                # scalar = Standarize()
-                # observations = scalar(observations)
-                # print("Observation mean: {}".format(observations.mean()))
-                # print("Observation std: {}".format(observations.std()))
-                observations, actions = torch.DoubleTensor(observations), torch.LongTensor(actions)
-                observations, actions = tensor_format(observations), tensor_format(actions)
+    x = Variable(torch.from_numpy(observation),requires_grad=True).double()
+    out = net(x).data.numpy()
+    action = np.random.choice(3,1,p=out)
+    action =int(action)
+    # print("Current step: {}".format(step))
+    print(action)
+    observation, reward, done, info = env.step(action)
 
-                ################### **Training the Network** #########################
-                learn_rate = next(lr_generator)
-                optimizer = optim.SGD(net.parameters(),lr=learn_rate,momentum=0.90, nesterov=True,weight_decay=1e-4)
-                printModel(net,optimizer)
-
-                train_iterations=3
-                for i in range(train_iterations):
-                    count += 1
-                    ipdb.set_trace()
-                    before_weights = weightMag(net)
-                    ################################################################
-                    optimizer.zero_grad()
-                    #########################
-                    outputs = net(observations)
-
-                    acc = score(outputs,actions)
-                    w.add_scalar('Accuracy', acc,count)
-                    print("Accuracy: {}".format(acc))
-                    #########################
-                    loss = criterion(outputs, actions)
-
-                    w.add_scalar('Loss', loss.data[0],count)
-                    print("Loss value: {}".format(loss))
-                    #########################
-                    loss.backward()
-                    optimizer.step()
-                    ################################################################
-                    after_weights =weightMag(net)
-                    relDiff_list = relDiff(before_weights,after_weights)
-                    relDiff_dict = listToDict(relDiff_list)
-                    w.add_scalars('LayerChanges',relDiff_dict,count)
-
-                print("Network updated!")
-
-    ################### **Evaluating Network** #########################
+    # store all the observations and actions from one episode
+    test_observations.append(observation)
+    test_actions.append(action)
     
-    observation = env.reset()
-    done = False
-    step = 0
-    test_actions = []
-    test_observations = [] 
-    net.eval()
-
-    while not done:
-        env.render()
-        # print(observation)
-        
-        x = Variable(torch.from_numpy(observation),requires_grad=True).double()
-        out = net(x).data.numpy()
-        action = np.random.choice(3,1,p=out)
-        action =int(action)
-        # print("Current step: {}".format(step))
-        print(action)
-        observation, reward, done, info = env.step(action)
-
-        # store all the observations and actions from one episode
-        test_observations.append(observation)
-        test_actions.append(action)
-        
-        step += 1
-        sleep(0.05)
+    step += 1
+    sleep(0.05)
 
