@@ -48,6 +48,7 @@ import torch.optim as optim
 from tensorboardX import SummaryWriter
 import numpy as np
 import ipdb
+
 from utils import *
 from functions import *
 
@@ -58,17 +59,32 @@ class Net(nn.Module):
         self.fc2 = nn.Linear(16,3)
     def forward(self, x):
         x = F.relu(self.fc1(x))
-        return self.fc2(x)
+        return F.softmax(self.fc2(x))
 
 net = Net()
 count = 0
 # w = SummaryWriter()
-
 env = gym.make('Acrobot-v1')
-print(env.action_space)
-print(env.observation_space)
+# print(env.action_space)
+# print(env.observation_space)
 
 num_episodes = 2000
+num_trajectory = 10
 for episode in range(num_episodes):
-    traj_list,action_list,reward_list = getTrajectories(net,env)
+    trajectory, actions, reward = sampleTrajectory(net,env)
+    probs = net(numpyFormat(trajectory).float())
+
+    total_loss = LogLoss(probs,actions,reward)
+    print(total_loss)
+    for _ in range(num_trajectory-1):
+        trajectory, actions, reward = sampleTrajectory(net,env)
+        probs = net(numpyFormat(trajectory).float())
+
+        traj_loss = LogLoss(probs,actions,reward)
+        total_loss += traj_loss
+        print(total_loss)
+    
     ipdb.set_trace()
+    optimizer.zero_grad()
+    total_loss.backward()
+    optimizer.step()
