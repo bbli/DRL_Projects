@@ -46,60 +46,62 @@ import ipdb
 from utils import *
 from functions import *
 
-class Net(nn.Module):
-    def __init__(self):
-        super(Net, self).__init__()
-        self.fc1 = nn.Linear(6,16)
-        self.fc2 = nn.Linear(16,3)
-    def forward(self, x):
-        x = F.relu(self.fc1(x))
-        return F.softmax(self.fc2(x))
 
-net = Net()
-optimizer = optim.Adam(net.parameters(), lr=0.01)
-w = SummaryWriter()
-count = 0
-env = gym.make('Acrobot-v1')
-# print(env.action_space)
-# print(env.observation_space)
-evaluateModel(net)
-randomWalk()
+def train(decay=0,num_trajectory,neurons):
+    ################ **Defining Model and Environment** ##################
 
-################################################################
-num_episodes = 2000
-num_trajectory = 10
-baseline = -500
-for episode in range(num_episodes):
-    print(episode)
-    before_weights_list = weightMag(net)
-    ################# **Evaluating the Loss across Trajectories** ###################
-    for i in range(num_trajectory):
-        count +=1
-        trajectory, actions, reward = sampleTrajectory(net,env)
-        w.add_scalar('Reward',reward,count)
-        probs = net(numpyFormat(trajectory).float())
+    class Net(nn.Module):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.fc1 = nn.Linear(6,neurons)
+            self.fc2 = nn.Linear(neurons,3)
+        def forward(self, x):
+            x = F.relu(self.fc1(x))
+            return F.softmax(self.fc2(x))
 
-        traj_loss = LogLoss(probs,actions,reward,baseline)
-        baseline = 0.99*baseline + 0.01*reward
-        if i == 0:
-            total_loss = traj_loss
-        else:
-            total_loss += traj_loss
-    ## Averaging to create loss estimator
-    total_loss = torch.mul(total_loss,1/num_trajectory)
-    w.add_scalar('Loss', total_loss.data[0],episode)
+    net = Net()
+    optimizer = optim.Adam(net.parameters(), lr=0.0,weight_decay=decay)
+    w = SummaryWriter()
+    count = 0
+    env = gym.make('Acrobot-v1')
+    # print(env.action_space)
+    # print(env.observation_space)
+    # evaluateModel(net)
+    # randomWalk()
+
     ################################################################
-    
-    optimizer.zero_grad()
-    total_loss.backward()
-    optimizer.step()
+    num_episodes = 1200
+    baseline = -500
+    for episode in range(num_episodes):
+        print(episode)
+        before_weights_list = weightMag(net)
+        ################# **Evaluating the Loss across Trajectories** ###################
+        for i in range(num_trajectory):
+            count +=1
+            trajectory, actions, reward = sampleTrajectory(net,env)
+            w.add_scalar('Reward',reward,count)
+            probs = net(numpyFormat(trajectory).float())
+
+            traj_loss = LogLoss(probs,actions,reward,baseline)
+            baseline = 0.99*baseline + 0.01*reward
+            if i == 0:
+                total_loss = traj_loss
+            else:
+                total_loss += traj_loss
+        ## Averaging to create loss estimator
+        total_loss = torch.mul(total_loss,1/num_trajectory)
+        w.add_scalar('Loss', total_loss.data[0],episode)
+        ################################################################
+        
+        optimizer.zero_grad()
+        total_loss.backward()
+        optimizer.step()
 
 
-    after_weights_list =weightMag(net)
-    relDiff_list = relDiff(before_weights_list,after_weights_list)
-    relDiff_dict = listToDict(relDiff_list)
-    w.add_scalars('LayerChanges',relDiff_dict,count)
-w.close()
-################################################################
+        after_weights_list =weightMag(net)
+        relDiff_list = relDiff(before_weights_list,after_weights_list)
+        relDiff_dict = listToDict(relDiff_list)
+        w.add_scalars('LayerChanges',relDiff_dict,count)
+    w.close()
+    ################################################################
 
-evaluateModel(net)
