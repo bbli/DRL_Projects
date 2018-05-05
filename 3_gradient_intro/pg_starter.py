@@ -70,7 +70,8 @@ num_episodes = 2000
 num_trajectory = 10
 baseline = -500
 for episode in range(num_episodes):
-
+    print(episode)
+    before_weights_list = weightMag(net)
     ################# **Evaluating the Loss across Trajectories** ###################
     for i in range(num_trajectory):
         count +=1
@@ -92,6 +93,12 @@ for episode in range(num_episodes):
     optimizer.zero_grad()
     total_loss.backward()
     optimizer.step()
+
+
+    after_weights_list =weightMag(net)
+    relDiff_list = relDiff(before_weights_list,after_weights_list)
+    relDiff_dict = listToDict(relDiff_list)
+    w.add_scalars('LayerChanges',relDiff_dict,count)
 w.close()
 ################################################################
 

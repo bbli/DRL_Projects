@@ -4,6 +4,7 @@ from utils import *
 import numpy as np
 import getch
 import gym
+import time
 
 ################################################################
 def getTrajectories(net,env):
@@ -65,15 +66,18 @@ def evaluateModel(net):
     print("This is sampling from the untrained network")
     env = gym.make('Acrobot-v1')
     state = env.reset()
+    count =0
     while True:
+        count += 1
         env.render()
         action=getAction(net,state)
         state,reward,done,info = env.step(action)
+        time.sleep(0.04)
         if done == True:
             print("Click any key to close the environment")
             getch.getch()
             env.close()
-            return 0
+            return count,state
 
 def randomWalk():
     env = gym.make('Acrobot-v1')
@@ -83,6 +87,7 @@ def randomWalk():
         env.render()
         action = env.action_space.sample()
         state, reward, done, info = env.step(action)
+        time.sleep(0.04)
         if done == True:
             print("Click any key to close the environment")
             getch.getch()
