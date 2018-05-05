@@ -56,43 +56,43 @@ class Net(nn.Module):
         return F.softmax(self.fc2(x))
 
 net = Net()
+optimizer = optim.Adam(net.parameters(), lr=0.01)
+w = SummaryWriter()
 count = 0
-# w = SummaryWriter()
 env = gym.make('Acrobot-v1')
 # print(env.action_space)
 # print(env.observation_space)
 evaluateModel(net)
 randomWalk()
 
+################################################################
 num_episodes = 2000
 num_trajectory = 10
+baseline = -500
 for episode in range(num_episodes):
-    count +=1
 
-    ################### **Evaluating the Loss across Trajectories** #########################
-    trajectory, actions, reward = sampleTrajectory(net,env)
-    w.add_scalar('Reward',reward,count)
-    probs = net(numpyFormat(trajectory).float())
-    total_loss = LogLoss(probs,actions,reward)
-    print(total_loss)
-
-    for _ in range(num_trajectory-1):
+    ################# **Evaluating the Loss across Trajectories** ###################
+    for i in range(num_trajectory):
         count +=1
         trajectory, actions, reward = sampleTrajectory(net,env)
         w.add_scalar('Reward',reward,count)
         probs = net(numpyFormat(trajectory).float())
 
-        traj_loss = LogLoss(probs,actions,reward)
-        total_loss += traj_loss
-        print(total_loss)
+        traj_loss = LogLoss(probs,actions,reward,baseline)
+        baseline = 0.99*baseline + 0.01*reward
+        if i == 0:
+            total_loss = traj_loss
+        else:
+            total_loss += traj_loss
     ## Averaging to create loss estimator
     total_loss = torch.mul(total_loss,1/num_trajectory)
-    ipdb.set_trace()
     w.add_scalar('Loss', total_loss.data[0],episode)
     ################################################################
     
     optimizer.zero_grad()
     total_loss.backward()
     optimizer.step()
+w.close()
+################################################################
 
 evaluateModel(net)

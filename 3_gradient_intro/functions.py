@@ -51,14 +51,15 @@ def getAction(net,state):
 #########################
 ################################################################
 
-def LogLoss(probs, actions, reward):
+def LogLoss(probs, actions, reward, baseline):
     for i,(prob,action) in enumerate(zip(probs,actions)):
         if i ==0:
             total_loss = torch.log(prob[action])
         else:
             total_loss += torch.log(prob[action])
-    # negative in front of reward since optimizer does gradient descent
-    return torch.mul(total_loss,-reward)
+    # negative in front since optimizer does gradient descent
+    total_loss = torch.mul(total_loss,-1)
+    return torch.mul(total_loss,reward-baseline)
 
 def evaluateModel(net):
     print("This is sampling from the untrained network")
