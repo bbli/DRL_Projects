@@ -63,18 +63,19 @@ env = gym.make('Acrobot-v1')
 # print(env.observation_space)
 evaluateModel(net)
 randomWalk()
-ipdb.set_trace()
 
 num_episodes = 2000
 num_trajectory = 10
 for episode in range(num_episodes):
     count +=1
+
+    ################### **Evaluating the Loss across Trajectories** #########################
     trajectory, actions, reward = sampleTrajectory(net,env)
     w.add_scalar('Reward',reward,count)
     probs = net(numpyFormat(trajectory).float())
-
     total_loss = LogLoss(probs,actions,reward)
     print(total_loss)
+
     for _ in range(num_trajectory-1):
         count +=1
         trajectory, actions, reward = sampleTrajectory(net,env)
@@ -84,8 +85,12 @@ for episode in range(num_episodes):
         traj_loss = LogLoss(probs,actions,reward)
         total_loss += traj_loss
         print(total_loss)
-    
+    ## Averaging to create loss estimator
+    total_loss = torch.mul(total_loss,1/num_trajectory)
     ipdb.set_trace()
+    w.add_scalar('Loss', total_loss.data[0],episode)
+    ################################################################
+    
     optimizer.zero_grad()
     total_loss.backward()
     optimizer.step()
