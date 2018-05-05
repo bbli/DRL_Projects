@@ -14,7 +14,7 @@ def getTrajectories(net,env):
     reward_list=[]
     for _ in range(batch_size):
         trajectory,actions,total_reward = sampleTrajectory(net,env)
-        ipdb.set_trace()
+        # ipdb.set_trace()
         trajectory_list.append(trajectory) 
         actions_list.append(actions_list)
         reward_list.append(total_reward)

@@ -32,15 +32,13 @@ In order to render the env, you need to run the following command:
 """
 
 import gym
-import numpy as np
 import time
 import torch
 from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from tensorboardX import SummaryWriter
-import numpy as np
+# from tensorboardX import SummaryWriter
 import ipdb
 
 from utils import *
@@ -125,3 +123,4 @@ for decay in decay_parameters:
                 best_model = model
                 min_runs = average_runs
 
+torch.save(best_model.state_dict(),'best_model.pt')
