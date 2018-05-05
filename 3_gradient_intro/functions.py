@@ -2,6 +2,8 @@ import ipdb
 import torch 
 from utils import *
 import numpy as np
+import getch
+import gym
 
 ################################################################
 def getTrajectories(net,env):
@@ -42,7 +44,10 @@ def getAction(net,state):
     state = numpyFormat(state).float()
 
     output = net(state).data.numpy()
-    return np.argmax(output)
+    action = np.random.choice([0,1,2],p=output)
+    # action = np.argmax(output)
+    return action
+
 #########################
 ################################################################
 
