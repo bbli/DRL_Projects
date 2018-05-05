@@ -1,11 +1,6 @@
 #==========================================================================  
 # Policy Gradient Starter Code 
 # 
-# The code was initially written for UCSB Deep Reinforcement Learning Seminar 2018
-#
-# Authors: Jieliang (Rodger) Luo, Sam Green
-#
-# April 23rd, 2018
 #==========================================================================
 
 """
@@ -38,7 +33,6 @@ In order to render the env, you need to run the following command:
 
 import gym
 import numpy as np
-import random
 import time
 import torch
 from torch.autograd import Variable
@@ -67,8 +61,8 @@ count = 0
 env = gym.make('Acrobot-v1')
 # print(env.action_space)
 # print(env.observation_space)
-randomWalk(env)
-# evaluateModel(net,env)
+evaluateModel(net)
+randomWalk()
 ipdb.set_trace()
 
 num_episodes = 2000
@@ -95,3 +89,5 @@ for episode in range(num_episodes):
     optimizer.zero_grad()
     total_loss.backward()
     optimizer.step()
+
+evaluateModel(net)

@@ -60,15 +60,30 @@ def LogLoss(probs, actions, reward):
     # negative in front of reward since optimizer does gradient descent
     return torch.mul(total_loss,-reward)
 
-def evaluateModel(net,env):
-    state= env.reset()
-    env.render()
-    count =0
+def evaluateModel(net):
+    print("This is sampling from the untrained network")
+    env = gym.make('Acrobot-v1')
+    state = env.reset()
     while True:
-        count +=1
+        env.render()
         action=getAction(net,state)
         state,reward,done,info = env.step(action)
-        env.render()
         if done == True:
-            return count
+            print("Click any key to close the environment")
+            getch.getch()
+            env.close()
+            return 0
 
+def randomWalk():
+    env = gym.make('Acrobot-v1')
+    print("This is just random action sampling")
+    env.reset()
+    while True:
+        env.render()
+        action = env.action_space.sample()
+        state, reward, done, info = env.step(action)
+        if done == True:
+            print("Click any key to close the environment")
+            getch.getch()
+            env.close()
+            return 0
