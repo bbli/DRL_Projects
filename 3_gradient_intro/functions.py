@@ -62,7 +62,7 @@ def LogLoss(probs, actions, reward, baseline):
     total_loss = torch.mul(total_loss,-1)
     return torch.mul(total_loss,reward-baseline)
 
-def evaluateModel(net):
+def showModel(net):
     print("This is sampling from the untrained network")
     env = gym.make('Acrobot-v1')
     state = env.reset()
@@ -77,7 +77,7 @@ def evaluateModel(net):
             print("Click any key to close the environment")
             getch.getch()
             env.close()
-            return count,state
+            return count
 
 def randomWalk():
     env = gym.make('Acrobot-v1')
@@ -93,3 +93,24 @@ def randomWalk():
             getch.getch()
             env.close()
             return 0
+################################################################
+def averageModelRuns(model):
+    env = gym.make('Acrobot-v1')
+    num_trials = 100
+    total_count =0
+    for _ in range(num_trials):
+        state = env.reset()
+        count = evaluateModel(model)
+        total_count += count
+    return total_count/num_trials
+
+def evaluateModel(net):
+    env = gym.make('Acrobot-v1')
+    state = env.reset()
+    count =0
+    while True:
+        count += 1
+        action=getAction(net,state)
+        state,reward,done,info = env.step(action)
+        if done == True:
+            return count

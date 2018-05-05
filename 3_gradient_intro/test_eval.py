@@ -14,6 +14,6 @@ class Net(nn.Module):
 net = Net()
 net.load_state_dict(torch.load('May04-19:11.pt'))
 
-count,state = evaluateModel(net)
+count = evaluateModel(net)
 print(count)
-print(state)
+print(averageModelRuns(net))

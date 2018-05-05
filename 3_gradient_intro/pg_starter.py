@@ -47,7 +47,7 @@ from utils import *
 from functions import *
 
 
-def train(decay=0,num_trajectory,neurons):
+def trainModel(decay,num_trajectory,neurons):
     ################ **Defining Model and Environment** ##################
 
     class Net(nn.Module):
@@ -60,26 +60,26 @@ def train(decay=0,num_trajectory,neurons):
             return F.softmax(self.fc2(x))
 
     net = Net()
-    optimizer = optim.Adam(net.parameters(), lr=0.0,weight_decay=decay)
-    w = SummaryWriter()
+    optimizer = optim.Adam(net.parameters(), lr=0.01,weight_decay=decay)
+    # w = SummaryWriter()
     count = 0
     env = gym.make('Acrobot-v1')
     # print(env.action_space)
     # print(env.observation_space)
-    # evaluateModel(net)
+    # showModel(net)
     # randomWalk()
 
     ################################################################
     num_episodes = 1200
     baseline = -500
     for episode in range(num_episodes):
-        print(episode)
+        # print(episode)
         before_weights_list = weightMag(net)
         ################# **Evaluating the Loss across Trajectories** ###################
         for i in range(num_trajectory):
             count +=1
             trajectory, actions, reward = sampleTrajectory(net,env)
-            w.add_scalar('Reward',reward,count)
+            # w.add_scalar('Reward',reward,count)
             probs = net(numpyFormat(trajectory).float())
 
             traj_loss = LogLoss(probs,actions,reward,baseline)
@@ -90,7 +90,7 @@ def train(decay=0,num_trajectory,neurons):
                 total_loss += traj_loss
         ## Averaging to create loss estimator
         total_loss = torch.mul(total_loss,1/num_trajectory)
-        w.add_scalar('Loss', total_loss.data[0],episode)
+        # w.add_scalar('Loss', total_loss.data[0],episode)
         ################################################################
         
         optimizer.zero_grad()
@@ -101,7 +101,27 @@ def train(decay=0,num_trajectory,neurons):
         after_weights_list =weightMag(net)
         relDiff_list = relDiff(before_weights_list,after_weights_list)
         relDiff_dict = listToDict(relDiff_list)
-        w.add_scalars('LayerChanges',relDiff_dict,count)
-    w.close()
+        # w.add_scalars('LayerChanges',relDiff_dict,count)
+    # w.close()
+    return net
     ################################################################
+
+decay_parameters = [0,1e-4,1e-3]
+num_traj_parameters = [10,15,20]
+neuron_parameters = [10,20,30,40]
+min_runs = 500
+run_count =0
+for decay in decay_parameters:
+    for num in num_traj_parameters:
+        for neuron in neuron_parameters:
+            run_count +=1
+            print("Run {}",run_count)
+            model = trainModel(decay, num, neuron)
+            # average_runs = evaluateModel(model)
+            average_runs = averageModelRuns(model)
+            print("Decay: {} Number of Trajectories: {} Hidden Units: {}".format(decay, num, neuron))
+            print("Average number of runs: {}".format(average_runs))
+            if average_runs<min_runs:
+                best_model = model
+                min_runs = average_runs
 
