@@ -55,3 +55,15 @@ def LogLoss(probs, actions, reward):
     # negative in front of reward since optimizer does gradient descent
     return torch.mul(total_loss,-reward)
 
+def evaluateModel(net,env):
+    state= env.reset()
+    env.render()
+    count =0
+    while True:
+        count +=1
+        action=getAction(net,state)
+        state,reward,done,info = env.step(action)
+        env.render()
+        if done == True:
+            return count
+

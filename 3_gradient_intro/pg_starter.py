@@ -67,17 +67,24 @@ count = 0
 env = gym.make('Acrobot-v1')
 # print(env.action_space)
 # print(env.observation_space)
+randomWalk(env)
+# evaluateModel(net,env)
+ipdb.set_trace()
 
 num_episodes = 2000
 num_trajectory = 10
 for episode in range(num_episodes):
+    count +=1
     trajectory, actions, reward = sampleTrajectory(net,env)
+    w.add_scalar('Reward',reward,count)
     probs = net(numpyFormat(trajectory).float())
 
     total_loss = LogLoss(probs,actions,reward)
     print(total_loss)
     for _ in range(num_trajectory-1):
+        count +=1
         trajectory, actions, reward = sampleTrajectory(net,env)
+        w.add_scalar('Reward',reward,count)
         probs = net(numpyFormat(trajectory).float())
 
         traj_loss = LogLoss(probs,actions,reward)
