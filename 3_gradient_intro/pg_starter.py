@@ -45,20 +45,22 @@ from utils import *
 from functions import *
 
 
-def trainModel(decay,num_trajectory,neurons):
+def trainModel(probability,neurons):
     ################ **Defining Model and Environment** ##################
 
     class Net(nn.Module):
         def __init__(self):
             super(Net, self).__init__()
             self.fc1 = nn.Linear(6,neurons)
+            self.dropout = nn.DropOut(p=probability)
             self.fc2 = nn.Linear(neurons,3)
         def forward(self, x):
             x = F.relu(self.fc1(x))
             return F.softmax(self.fc2(x))
 
     net = Net()
-    optimizer = optim.Adam(net.parameters(), lr=0.01,weight_decay=decay)
+    net.train()
+    optimizer = optim.Adam(net.parameters(), lr=0.01)
     # w = SummaryWriter()
     count = 0
     env = gym.make('Acrobot-v1')
@@ -70,6 +72,7 @@ def trainModel(decay,num_trajectory,neurons):
     ################################################################
     num_episodes = 1200
     baseline = -500
+    num_trajectory = 16
     for episode in range(num_episodes):
         # print(episode)
         before_weights_list = weightMag(net)
@@ -79,6 +82,7 @@ def trainModel(decay,num_trajectory,neurons):
             trajectory, actions, reward = sampleTrajectory(net,env)
             # w.add_scalar('Reward',reward,count)
             probs = net(numpyFormat(trajectory).float())
+            ipdb.set_trace()
 
             traj_loss = LogLoss(probs,actions,reward,baseline)
             baseline = 0.99*baseline + 0.01*reward
@@ -116,9 +120,9 @@ for decay in decay_parameters:
             print("Run {}",run_count)
             model = trainModel(decay, num, neuron)
             # average_runs = evaluateModel(model)
-            average_runs = averageModelRuns(model)
+            average_runs, std = averageModelRuns(model)
             print("Decay: {} Number of Trajectories: {} Hidden Units: {}".format(decay, num, neuron))
-            print("Average number of runs: {}".format(average_runs))
+            print("Mean runs: {}, Standard Deviation: {}".format(average_runs,std))
             if average_runs<min_runs:
                 best_model = model
                 min_runs = average_runs

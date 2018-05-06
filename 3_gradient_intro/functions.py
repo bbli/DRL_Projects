@@ -108,6 +108,7 @@ def averageModelRuns(model):
 def evaluateModel(net):
     env = gym.make('Acrobot-v1')
     state = env.reset()
+    net.eval()
     count =0
     while True:
         count += 1
