@@ -41,12 +41,13 @@ def sampleTrajectory(net,env):
         else:
             trajectory.append(state)
 
-def getAction(net,state):
+def getAction(net,state,force=False):
     state = numpyFormat(state).float()
 
     output = net(state).data.numpy()
     action = np.random.choice([0,1,2],p=output)
-    # action = np.argmax(output)
+    if force:
+        action = np.argmax(output)
     return action
 
 #########################
