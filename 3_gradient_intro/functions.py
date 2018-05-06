@@ -97,12 +97,13 @@ def randomWalk():
 def averageModelRuns(model):
     env = gym.make('Acrobot-v1')
     num_trials = 100
-    total_count =0
+    counts_list=[]
     for _ in range(num_trials):
         state = env.reset()
         count = evaluateModel(model)
-        total_count += count
-    return total_count/num_trials
+        counts_list.append(count)
+    counts_list = np.array(counts_list)
+    return counts_list.mean(), counts_list.std(ddof=1)
 
 def evaluateModel(net):
     env = gym.make('Acrobot-v1')
