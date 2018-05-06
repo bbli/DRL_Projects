@@ -38,7 +38,8 @@ from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-# from tensorboardX import SummaryWriter
+from torch.optim.lr_scheduler import LambdaLR
+from tensorboardX import SummaryWriter
 import ipdb
 
 from utils import *
@@ -52,7 +53,7 @@ def trainModel(probability,neurons):
         def __init__(self):
             super(Net, self).__init__()
             self.fc1 = nn.Linear(6,neurons)
-            self.dropout = nn.DropOut(p=probability)
+            self.dropout = nn.Dropout(p=probability)
             self.fc2 = nn.Linear(neurons,3)
         def forward(self, x):
             x = F.relu(self.fc1(x))
@@ -60,8 +61,7 @@ def trainModel(probability,neurons):
 
     net = Net()
     net.train()
-    optimizer = optim.Adam(net.parameters(), lr=0.01)
-    # w = SummaryWriter()
+    w = SummaryWriter()
     count = 0
     env = gym.make('Acrobot-v1')
     # print(env.action_space)
@@ -73,6 +73,11 @@ def trainModel(probability,neurons):
     num_episodes = 1200
     baseline = -500
     num_trajectory = 16
+    optimizer1 = optim.Adam(net.parameters(), lr=0.01)
+    optimizer2 = optim.SGD(net.parameters(),  lr=.001,momentum=0.8)
+    scheduler2 = LambdaLR(optimizer2,lr_lambda=cylic(80))
+    optimizer3 = optim.Adam(net.parameters(), lr=0.08)
+    optimizer4 = optim.Adam(net.parameters(), lr=0.05)
     for episode in range(num_episodes):
         # print(episode)
         before_weights_list = weightMag(net)
@@ -80,51 +85,60 @@ def trainModel(probability,neurons):
         for i in range(num_trajectory):
             count +=1
             trajectory, actions, reward = sampleTrajectory(net,env)
-            # w.add_scalar('Reward',reward,count)
+            w.add_scalar('Reward',reward,count)
             probs = net(numpyFormat(trajectory).float())
-            ipdb.set_trace()
 
             traj_loss = LogLoss(probs,actions,reward,baseline)
             baseline = 0.99*baseline + 0.01*reward
+            w.add_scalar('Baseline',baseline,count)
             if i == 0:
                 total_loss = traj_loss
             else:
                 total_loss += traj_loss
         ## Averaging to create loss estimator
         total_loss = torch.mul(total_loss,1/num_trajectory)
-        # w.add_scalar('Loss', total_loss.data[0],episode)
+        w.add_scalar('Loss', total_loss.data[0],episode)
         ################################################################
-        
+        if episode<150:
+            optimizer = optimizer1
+        elif episode<500:
+            optimizer = optimizer2
+        elif episode<800:
+            optimizer = optimizer3
+        else:
+            optimizer = optimizer4
         optimizer.zero_grad()
         total_loss.backward()
         optimizer.step()
+        scheduler2.step()
 
 
         after_weights_list =weightMag(net)
         relDiff_list = relDiff(before_weights_list,after_weights_list)
         relDiff_dict = listToDict(relDiff_list)
         # w.add_scalars('LayerChanges',relDiff_dict,count)
-    # w.close()
+        weight_change = totalDiff(before_weights_list,after_weights_list)
+        w.add_scalar('Weight Change',weight_change,count)
+    w.close()
     return net
-    ################################################################
+################################################################
 
-decay_parameters = [0,1e-4,1e-3]
-num_traj_parameters = [10,15,20]
-neuron_parameters = [10,20,30,40]
+neuron_parameters = [20,30,40,50]
+probability_parameters = [0.2,0.3,0.4,0.5]
 min_runs = 500
 run_count =0
-for decay in decay_parameters:
-    for num in num_traj_parameters:
-        for neuron in neuron_parameters:
-            run_count +=1
-            print("Run {}",run_count)
-            model = trainModel(decay, num, neuron)
-            # average_runs = evaluateModel(model)
-            average_runs, std = averageModelRuns(model)
-            print("Decay: {} Number of Trajectories: {} Hidden Units: {}".format(decay, num, neuron))
-            print("Mean runs: {}, Standard Deviation: {}".format(average_runs,std))
-            if average_runs<min_runs:
-                best_model = model
-                min_runs = average_runs
+for prob in probability_parameters:
+    for neuron in neuron_parameters:
+        run_count +=1
+        print("Run {}",run_count)
+        model = trainModel(prob, neuron)
+        # average_runs = evaluateModel(model)
+        average_runs, std = averageModelRuns(model)
+        print("Hidden Units: {}, Dropout Prob: {}".format(neuron,prob))
+        print("Mean runs: {}, Standard Deviation: {}".format(average_runs,std))
+        ipdb.set_trace()
+        if average_runs<min_runs:
+            best_model = model
+            min_runs = average_runs
 
 torch.save(best_model.state_dict(),'best_model.pt')
