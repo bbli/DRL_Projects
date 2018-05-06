@@ -36,7 +36,7 @@ def valScorer(test_loader,model,criterion):
     val_loss = val_loss/count
     return val_loss
 
-def weightMag(net):
+def layerMag(net):
     layer_list =[]
     for param in net.parameters():
         mag = (param*param).sum().sqrt()
@@ -44,6 +44,13 @@ def weightMag(net):
         layer_list.append(mag) 
     return layer_list
 
+def netMag(net):
+    total_mag = 0
+    for param in net.parameters():
+        mag = (param*param).sum()
+        total_mag += mag
+    total_mag = total_mag.sqrt()
+    return float(total_mag.data.numpy())
 ################################################################
 def relDiff(list1,list2):
     l=[]
@@ -61,6 +68,19 @@ def listToDict(l):
         new_dict[str(i)]=item
     return new_dict
 
+# def totalDiff(list1,list2):
+    # # list1 = np.array(list1)
+    # # list2 = np.arrray(list2)
+    # # list1_value = list1.sum()
+    # # list2_value = list2.sum()
+    # total = 0
+    # for x,y in zip(list1,list2):
+        # total += abs(x-y)
+    # # return abs(list1_value-list2_value)
+    # return total
+def totalDiff(net):
+    for 
+################################################################
 from sklearn.preprocessing import StandardScaler
 
         
@@ -129,6 +149,8 @@ from inspect import getsource
 def code(function):
     print(getsource(function))
 
-
-
-
+def cyclic(period):
+    def f(episode):
+        modulus = episode % period
+        return 1/(1+0.05*modulus)
+    return f

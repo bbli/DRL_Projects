@@ -80,7 +80,8 @@ def trainModel(probability,neurons):
     optimizer4 = optim.Adam(net.parameters(), lr=0.05)
     for episode in range(num_episodes):
         # print(episode)
-        before_weights_list = weightMag(net)
+        # before_weights_list = layerMag(net)
+        before_weights = netMag(net)
         ################# **Evaluating the Loss across Trajectories** ###################
         for i in range(num_trajectory):
             count +=1
@@ -113,12 +114,14 @@ def trainModel(probability,neurons):
         scheduler2.step()
 
 
-        after_weights_list =weightMag(net)
-        relDiff_list = relDiff(before_weights_list,after_weights_list)
-        relDiff_dict = listToDict(relDiff_list)
+        # after_weights_list =layerMag(net)
+        # relDiff_list = relDiff(before_weights_list,after_weights_list)
+        # relDiff_dict = listToDict(relDiff_list)
         # w.add_scalars('LayerChanges',relDiff_dict,count)
-        weight_change = totalDiff(before_weights_list,after_weights_list)
-        w.add_scalar('Weight Change',weight_change,count)
+        # weight_change = totalDiff(before_weights_list,after_weights_list)
+        # w.add_scalar('Weight Change',weight_change,count)
+        after_weights = netMag(net)
+        w.add_scalar('Weight Change', abs(before_weights-after_weights),count)
     w.close()
     return net
 ################################################################
