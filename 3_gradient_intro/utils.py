@@ -78,8 +78,6 @@ def listToDict(l):
         # total += abs(x-y)
     # # return abs(list1_value-list2_value)
     # return total
-def totalDiff(net):
-    for 
 ################################################################
 from sklearn.preprocessing import StandardScaler
 

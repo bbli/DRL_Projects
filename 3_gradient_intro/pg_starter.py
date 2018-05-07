@@ -57,7 +57,9 @@ def trainModel(probability,neurons):
             self.fc2 = nn.Linear(neurons,3)
         def forward(self, x):
             x = F.relu(self.fc1(x))
-            return F.softmax(self.fc2(x))
+            x = self.dropout(x)
+            x = self.fc2(x)
+            return F.softmax(x)
 
     net = Net()
     net.train()
@@ -85,7 +87,8 @@ def trainModel(probability,neurons):
         ################# **Evaluating the Loss across Trajectories** ###################
         for i in range(num_trajectory):
             count +=1
-            trajectory, actions, reward = sampleTrajectory(net,env)
+            trajectory, actions, reward = sampleTrajectory(net,env,last_reward)
+            last_reward = reward
             w.add_scalar('Reward',reward,count)
             probs = net(numpyFormat(trajectory).float())
 
@@ -104,14 +107,12 @@ def trainModel(probability,neurons):
             optimizer = optimizer1
         elif episode<500:
             optimizer = optimizer2
-        elif episode<800:
-            optimizer = optimizer3
+            scheduler2.step()
         else:
-            optimizer = optimizer4
+            optimizer = optimizer3
         optimizer.zero_grad()
         total_loss.backward()
         optimizer.step()
-        scheduler2.step()
 
 
         # after_weights_list =layerMag(net)
