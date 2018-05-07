@@ -29,25 +29,30 @@ net.load_state_dict(torch.load('May04-19:11.pt'))
 data = torch.ones(5,6)
 data = Variable(data).float()
 ################ **Learning about Schedulers** ##################
-learn_rate = 10
-optimizer = optim.SGD(net.parameters(),lr=learn_rate)
-# ## not a copy!!
+# learn_rate = 10
+# optimizer = optim.SGD(net.parameters(),lr=learn_rate)
+# # ## not a copy!!
+# # group = next(iter(optimizer.param_groups))
+# # group['initial_lr'] = learn_rate
+
+# ## For this problem, I want to step the scheduler along with the optimizer
+# ## so every **episode**
+# ## probably will set period to around 80
+# def cyclic(period):
+    # def f(episode):
+        # modulus = episode % period
+        # return 1/(1+0.05*modulus)
+    # return f
+
+# scheduler = LambdaLR(optimizer,lr_lambda=cyclic(80))
 # group = next(iter(optimizer.param_groups))
-# group['initial_lr'] = learn_rate
+# for epoch in range(100):
+    # print(optimizer.state_dict()['param_groups'][0]['lr'])
+    # # print(group['lr'])
+    # scheduler.step()
 
-## For this problem, I want to step the scheduler along with the optimizer
-## so every **episode**
-## probably will set period to around 80
-def cyclic(period):
-    def f(episode):
-        modulus = episode % period
-        return 1/(1+0.05*modulus)
-    return f
-
-scheduler = LambdaLR(optimizer,lr_lambda=cyclic(80))
-group = next(iter(optimizer.param_groups))
-for epoch in range(100):
-    print(optimizer.state_dict()['param_groups'][0]['lr'])
-    # print(group['lr'])
-    scheduler.step()
-
+################ **Saving results into a DataFrame** ##################
+average_run_table
+std_table
+for _ in grid_search:
+    average_runs,std

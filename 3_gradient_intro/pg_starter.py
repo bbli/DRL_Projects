@@ -45,10 +45,32 @@ import ipdb
 from utils import *
 from functions import *
 
+def getTrajectoryLoss(net,env,count,baseline,episode,w=None):
+    num_trajectory=16
+    for i in range(num_trajectory):
+        count +=1
+        trajectory, actions, reward = sampleTrajectory(net,env)
+        probs = net(numpyFormat(trajectory).float())
+        
+        traj_loss = LogLoss(probs,actions,reward,baseline)
+        baseline = 0.99*baseline + 0.01*reward
+        if i == 0:
+            total_loss = traj_loss
+        else:
+            total_loss += traj_loss
 
-def trainModel(probability,neurons):
-    ################ **Defining Model and Environment** ##################
+        ################ **Logging** ##################
+        
+        if w:
+            w.add_scalar('Reward',reward,count)
+            w.add_scalar('Baseline',baseline,count)
+    ## Averaging to create loss estimator
+    total_loss = torch.mul(total_loss,1/num_trajectory)
+    if w:
+        w.add_scalar('Loss', total_loss.data[0],episode)
+    return total_loss,count,baseline
 
+def generateNetwork(probability,neurons,env):
     class Net(nn.Module):
         def __init__(self):
             super(Net, self).__init__()
@@ -61,17 +83,36 @@ def trainModel(probability,neurons):
             x = self.fc2(x)
             return F.softmax(x)
 
-    net = Net()
-    net.train()
-    w = SummaryWriter()
-    count = 0
+    while True:
+        net = Net()
+        net.train()
+        optimizer = optim.Adam(net.parameters(),lr=0.01)
+        num_episode=100
+        num_trajectory=16
+        count=0
+        baseline = -500
+        for episode in range(num_episode):
+            total_loss,count,baseline = getTrajectoryLoss(net,env,count,baseline,episode)
+            if total_loss.data[0]>1:
+                return net
+            optimizer.zero_grad()
+            total_loss.backward()
+            optimizer.step()
+
+
+def trainModel(probability,neurons):
+    ################ **Defining Model and Environment** ##################
+
     env = gym.make('Acrobot-v1')
+    net = generateNetwork(probability,neurons,env)
+    w = SummaryWriter()
     # print(env.action_space)
     # print(env.observation_space)
     # showModel(net)
     # randomWalk()
 
     ################################################################
+    count = 0
     num_episodes = 800
     baseline = -500
     num_trajectory = 16
@@ -86,24 +127,7 @@ def trainModel(probability,neurons):
         # before_weights_list = layerMag(net)
         before_weights = netMag(net)
         ################# **Evaluating the Loss across Trajectories** ###################
-        for i in range(num_trajectory):
-            count +=1
-            trajectory, actions, reward = sampleTrajectory(net,env)
-            # if reward == -500:
-                # ipdb.set_trace()
-            w.add_scalar('Reward',reward,count)
-            probs = net(numpyFormat(trajectory).float())
-
-            traj_loss = LogLoss(probs,actions,reward,baseline)
-            baseline = 0.99*baseline + 0.01*reward
-            w.add_scalar('Baseline',baseline,count)
-            if i == 0:
-                total_loss = traj_loss
-            else:
-                total_loss += traj_loss
-        ## Averaging to create loss estimator
-        total_loss = torch.mul(total_loss,1/num_trajectory)
-        w.add_scalar('Loss', total_loss.data[0],episode)
+        total_loss, count, baseline = getTrajectoryLoss(net,env,count,baseline,episode,w)
         ################################################################
         if episode<200:
             optimizer = optimizer1
