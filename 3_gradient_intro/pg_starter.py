@@ -173,7 +173,6 @@ for i,prob in enumerate(probability_parameters):
         print("Mean runs: {}, Standard Deviation: {}".format(average_runs,std))
         average_run_table[i,j] = average_runs
         std_table[i,j] = std
-        ipdb.set_trace()
         if average_runs<min_runs:
             best_model = model
             min_runs = average_runs
