@@ -76,7 +76,7 @@ def trainModel(probability,neurons):
     baseline = -500
     num_trajectory = 16
     optimizer1 = optim.Adam(net.parameters(), lr=0.01)
-    optimizer2 = optim.SGD(net.parameters(),  lr=0.001,momentum=0.8)
+    optimizer2 = optim.SGD(net.parameters(),  lr=6e-4,momentum=0.8)
     scheduler2 = LambdaLR(optimizer2,lr_lambda=cyclic(60))
     optimizer3 = optim.RMSprop(net.parameters(), lr=0.01,alpha=0.95)
     for episode in range(num_episodes):
@@ -87,6 +87,8 @@ def trainModel(probability,neurons):
         for i in range(num_trajectory):
             count +=1
             trajectory, actions, reward = sampleTrajectory(net,env)
+            # if reward == -500:
+                # ipdb.set_trace()
             w.add_scalar('Reward',reward,count)
             probs = net(numpyFormat(trajectory).float())
 
@@ -105,9 +107,9 @@ def trainModel(probability,neurons):
             optimizer = optimizer1
         elif episode<500:
             optimizer = optimizer2
-            scheduler2.step()
         else:
             optimizer = optimizer3
+        scheduler2.step()
         optimizer.zero_grad()
         total_loss.backward()
         optimizer.step()
