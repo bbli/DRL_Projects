@@ -74,7 +74,7 @@ def trainModel(probability,neurons):
     ################################################################
     num_episodes = 1000
     baseline = -500
-    num_trajectory = 16
+    num_trajectory = 12
     optimizer1 = optim.Adam(net.parameters(), lr=0.01)
     optimizer2 = optim.SGD(net.parameters(),  lr=1e-4,momentum=0.8,nesterov=True)
     scheduler2 = LambdaLR(optimizer2,lr_lambda=cyclic(60))
@@ -107,9 +107,9 @@ def trainModel(probability,neurons):
             optimizer = optimizer1
         elif episode<500:
             optimizer = optimizer2
+            scheduler2.step()
         else:
             optimizer = optimizer3
-        scheduler2.step()
         optimizer.zero_grad()
         total_loss.backward()
         optimizer.step()
