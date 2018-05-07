@@ -76,7 +76,7 @@ def trainModel(probability,neurons):
     baseline = -500
     num_trajectory = 20
     optimizer1 = optim.Adam(net.parameters(), lr=0.01)
-    optimizer2 = optim.SGD(net.parameters(),  lr=1e-4,momentum=0.8)
+    optimizer2 = optim.SGD(net.parameters(),  lr=1e-3,momentum=0.8)
     scheduler2 = LambdaLR(optimizer2,lr_lambda=cyclic(100))
     optimizer3 = optim.RMSprop(net.parameters(), lr=0.001,alpha=0.95)
     for episode in range(num_episodes):
