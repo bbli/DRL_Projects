@@ -30,7 +30,7 @@ def sampleTrajectory(net,env,last_reward):
     total_reward = 0
     while True:
         if abs(last_reward)<80:
-            action = getAction(net,state,True) 
+            action = getAction(net,state) 
         else:
             action = getAction(net,state)
         actions.append(action)
