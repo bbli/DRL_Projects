@@ -70,14 +70,14 @@ def trainModel(probability,neurons):
     # randomWalk()
 
     ################################################################
-    num_episodes = 1200
+    num_episodes = 1000
     baseline = -500
+    last_reward = -500
     num_trajectory = 16
     optimizer1 = optim.Adam(net.parameters(), lr=0.01)
-    optimizer2 = optim.SGD(net.parameters(),  lr=.001,momentum=0.8)
-    scheduler2 = LambdaLR(optimizer2,lr_lambda=cylic(80))
-    optimizer3 = optim.Adam(net.parameters(), lr=0.08)
-    optimizer4 = optim.Adam(net.parameters(), lr=0.05)
+    optimizer2 = optim.SGD(net.parameters(),  lr=0.001,momentum=0.8)
+    scheduler2 = LambdaLR(optimizer2,lr_lambda=cyclic(60))
+    optimizer3 = optim.RMSprop(net.parameters(), lr=0.01,alpha=0.95)
     for episode in range(num_episodes):
         # print(episode)
         # before_weights_list = layerMag(net)

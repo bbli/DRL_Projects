@@ -21,7 +21,7 @@ def getTrajectories(net,env):
     return np.array(trajectory_list),np.array(actions_list),np.array(reward_list)
 
 #########################
-def sampleTrajectory(net,env):
+def sampleTrajectory(net,env,last_reward):
     trajectory=[]
     actions=[]
 
@@ -29,7 +29,10 @@ def sampleTrajectory(net,env):
     trajectory.append(state)
     total_reward = 0
     while True:
-        action = getAction(net,state) 
+        if abs(last_reward)<80:
+            action = getAction(net,state,True) 
+        else:
+            action = getAction(net,state)
         actions.append(action)
 
         state, reward, done, info = env.step(action)
