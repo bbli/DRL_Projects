@@ -72,13 +72,15 @@ def trainModel(probability,neurons):
     # randomWalk()
 
     ################################################################
-    num_episodes = 1000
+    num_episodes = 800
     baseline = -500
-    num_trajectory = 20
+    num_trajectory = 16
     optimizer1 = optim.Adam(net.parameters(), lr=0.01)
-    optimizer2 = optim.SGD(net.parameters(),  lr=1e-3,momentum=0.8)
-    scheduler2 = LambdaLR(optimizer2,lr_lambda=cyclic(100))
-    optimizer3 = optim.RMSprop(net.parameters(), lr=0.001,alpha=0.95)
+    optimizer2 = optim.SGD(net.parameters(),  lr=1e-4,momentum=0.8)
+    scheduler2 = LambdaLR(optimizer2,lr_lambda=cyclic(80))
+    # optimizer3 = optim.RMSprop(net.parameters(), lr=0.001,alpha=0.95)
+    optimizer3 = optim.SGD(net.parameters(),  lr=1e-4,momentum=0.8)
+    scheduler3 = LambdaLR(optimizer3,lr_lambda=cyclic(200))
     for episode in range(num_episodes):
         # print(episode)
         # before_weights_list = layerMag(net)
@@ -103,13 +105,14 @@ def trainModel(probability,neurons):
         total_loss = torch.mul(total_loss,1/num_trajectory)
         w.add_scalar('Loss', total_loss.data[0],episode)
         ################################################################
-        if episode<150:
+        if episode<200:
             optimizer = optimizer1
         elif episode<500:
             optimizer = optimizer2
             scheduler2.step()
         else:
             optimizer = optimizer3
+            scheduler3.step()
         optimizer.zero_grad()
         total_loss.backward()
         optimizer.step()
