@@ -52,7 +52,13 @@ data = Variable(data).float()
     # scheduler.step()
 
 ################ **Saving results into a DataFrame** ##################
-average_run_table
-std_table
-for _ in grid_search:
-    average_runs,std
+probability_parameters = [0.3,0.4,0.5]
+neuron_parameters = [20,30,40,50]
+x,y = len(probability_parameters), len(neuron_parameters)
+average_run_table = np.zeros((x,y))
+std_table = np.zeros((x,y))
+for i,prob in enumerate(probability_parameters):
+    for j,neuron in enumerate(neuron_parameters):
+        average_runs= i+j
+        average_run_table[i,j] = average_runs
+

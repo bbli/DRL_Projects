@@ -156,10 +156,14 @@ def trainModel(probability,neurons):
 
 neuron_parameters = [20,30,40,50]
 probability_parameters = [0.2,0.3,0.4,0.5]
+x,y = len(probability_parameters), len(neuron_parameters)
+average_run_table = np.zeros((x,y))
+std_table = np.zeros((x,y))
+
 min_runs = 500
 run_count =0
-for prob in probability_parameters:
-    for neuron in neuron_parameters:
+for i,prob in enumerate(probability_parameters):
+    for j,neuron in enumerate(neuron_parameters):
         run_count +=1
         print("Run {}",run_count)
         model = trainModel(prob, neuron)
@@ -167,6 +171,8 @@ for prob in probability_parameters:
         average_runs, std = averageModelRuns(model)
         print("Hidden Units: {}, Dropout Prob: {}".format(neuron,prob))
         print("Mean runs: {}, Standard Deviation: {}".format(average_runs,std))
+        average_run_table[i,j] = average_runs
+        std_table[i,j] = std
         ipdb.set_trace()
         if average_runs<min_runs:
             best_model = model
