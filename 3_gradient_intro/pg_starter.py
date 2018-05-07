@@ -74,7 +74,6 @@ def trainModel(probability,neurons):
     ################################################################
     num_episodes = 1000
     baseline = -500
-    last_reward = -500
     num_trajectory = 16
     optimizer1 = optim.Adam(net.parameters(), lr=0.01)
     optimizer2 = optim.SGD(net.parameters(),  lr=0.001,momentum=0.8)
@@ -87,8 +86,7 @@ def trainModel(probability,neurons):
         ################# **Evaluating the Loss across Trajectories** ###################
         for i in range(num_trajectory):
             count +=1
-            trajectory, actions, reward = sampleTrajectory(net,env,last_reward)
-            last_reward = reward
+            trajectory, actions, reward = sampleTrajectory(net,env)
             w.add_scalar('Reward',reward,count)
             probs = net(numpyFormat(trajectory).float())
 
