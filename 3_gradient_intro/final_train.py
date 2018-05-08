@@ -19,13 +19,17 @@ def getTrajectoryLoss(net,env,count,baseline,episode,w=None):
         trajectory, actions, reward = sampleTrajectory(net,env)
         probs = net(numpyFormat(trajectory).float())
         
-        traj_loss = LogLoss(probs,actions,reward,baseline)
-        baseline = 0.99*baseline + 0.01*reward
+        ################ **Zeroing Loss if Reward is worse than Baseline** ##################
+        
+        if abs(reward) < abs(baseline):
+            traj_loss = LogLoss(probs,actions,reward,baseline)
+        else:
+            traj_loss = LogLoss(probs,actions,reward,reward)
+        ################################################################
         if i == 0:
             total_loss = traj_loss
         else:
             total_loss += traj_loss
-
         ################ **Logging** ##################
         
         if w:
@@ -50,11 +54,15 @@ class Net(nn.Module):
         return F.softmax(x)
 
 def trainModel(baseline_number):
+    '''
+    Returns a list of state_dicts for neural net
+    '''
     ################ **Defining Model and Environment** ##################
 
     env = gym.make('Acrobot-v1')
     net = Net()
     net.load_state_dict(torch.load('best_model.pt'))
+    net_list = []
     # w = SummaryWriter()
     # print(env.action_space)
     # print(env.observation_space)
@@ -74,20 +82,34 @@ def trainModel(baseline_number):
         ################# **Evaluating the Loss across Trajectories** ###################
         total_loss, count, baseline = getTrajectoryLoss(net,env,count,baseline,episode)
         baseline = baseline_number
-        ################################################################
         optimizer.zero_grad()
         total_loss.backward()
         optimizer.step()
-    return net
+        ################################################################
+        if episode%100 == 0:
+            net_list.append(net.state_dict())
+    return net_list
 
+def evaluateModels(net_list):
+    for state in net_list:
+        model = Net()
+        model.load_state_dict(state)
+        average_runs,std = averageModelRuns(model)
+        if average_runs<min_runs:
+            best_model = model
+            min_runs= average_runs
+    return best_model
 
-baseline_parameters = [100,95,90,85,80,75,72]
+baseline_parameters = [-90,-85,-80,-75,-72,-68,-65]
 min_runs = 500
 run_count =0
+models_list= []
 for baseline in baseline_parameters:
     run_count +=1
     print("Run {}",run_count)
-    model = trainModel(baseline)
+    net_list = trainModel(baseline)
+    model = evaluateModels(net_list)
+    models_list.append(model)
     # average_runs = evaluateModel(model)
     average_runs, std = averageModelRuns(model)
     print("Hidden Units: {}, Dropout Prob: {}".format(neuron,prob))
