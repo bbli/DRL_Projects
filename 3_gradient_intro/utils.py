@@ -183,3 +183,9 @@ def timeit(f):
         print("Elapsed Time: {}".format(end-start))
         return x
     return wrapper
+def updateNetwork(optimizer, loss, scheduler=None):
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+    if scheduler:
+        scheduler.step()

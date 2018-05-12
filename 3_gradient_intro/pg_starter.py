@@ -153,9 +153,8 @@ def trainModel(neurons):
             optimizer = optimizer1
         else:
             optimizer = optimizer2
-        optimizer.zero_grad()
-        total_loss.backward()
-        optimizer.step()
+
+        updateNetwork(optimizer,total_loss)
 
 
         # # after_weights_list =layerMag(net)
