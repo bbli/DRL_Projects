@@ -45,10 +45,12 @@ import ipdb
 from utils import *
 from functions import *
 
+################################################################
 def getTrajectoryLoss(net,env,count,baseline,episode,w=None):
     num_trajectory=16
+    local_count =count
     for i in range(num_trajectory):
-        count +=1
+        local_count +=1
         trajectory, actions, reward = sampleTrajectory(net,env)
         probs = net(numpyFormat(trajectory).float())
         
@@ -60,26 +62,27 @@ def getTrajectoryLoss(net,env,count,baseline,episode,w=None):
             total_loss += traj_loss
 
         ################ **Logging** ##################
-        
         if w:
-            w.add_scalar('Reward',reward,count)
-            w.add_scalar('Baseline',baseline,count)
+            w.add_scalar('Reward',reward,local_count)
+            w.add_scalar('Baseline',baseline,local_count)
+        ##############################################################
     ## Averaging to create loss estimator
     total_loss = torch.mul(total_loss,1/num_trajectory)
+    ################ **More Logging** ##################
+    
     if w:
         w.add_scalar('Loss', total_loss.data[0],episode)
-    return total_loss,count,baseline
+    return total_loss,local_count,baseline
+################################################################
 
-def generateNetwork(probability,neurons,env):
+def generateNetwork(neurons,env):
     class Net(nn.Module):
         def __init__(self):
             super(Net, self).__init__()
             self.fc1 = nn.Linear(6,neurons)
-            self.dropout = nn.Dropout(p=probability)
             self.fc2 = nn.Linear(neurons,3)
         def forward(self, x):
             x = F.relu(self.fc1(x))
-            x = self.dropout(x)
             x = self.fc2(x)
             return F.softmax(x)
 
@@ -100,12 +103,12 @@ def generateNetwork(probability,neurons,env):
                 return net
 
 
-def trainModel(probability,neurons):
+def trainModel(neurons):
     ################ **Defining Model and Environment** ##################
 
     env = gym.make('Acrobot-v1')
-    net = generateNetwork(probability,neurons,env)
-    # w = SummaryWriter()
+    net = generateNetwork(neurons,env)
+    w = SummaryWriter()
     # print(env.action_space)
     # print(env.observation_space)
     # showModel(net)
@@ -113,15 +116,16 @@ def trainModel(probability,neurons):
 
     ################################################################
     count = 0
-    num_episodes = 750
+    num_episodes = 1200
     baseline = -500
     num_trajectory = 16
-    optimizer1 = optim.Adam(net.parameters(), lr=0.01)
-    optimizer2 = optim.Adam(net.parameters(),  lr=3e-3)
-    scheduler2 = LambdaLR(optimizer2,lr_lambda=cyclic(80))
-    # optimizer3 = optim.RMSprop(net.parameters(), lr=0.001,alpha=0.95)
-    optimizer3 = optim.SGD(net.parameters(),  lr=2e-5,momentum=0.8)
-    scheduler3 = LambdaLR(optimizer3,lr_lambda=cyclic(200))
+    lr_1 = 0.01
+    lr_2 = 3e-3
+    optimizer1 = optim.Adam(net.parameters(), lr=lr_1)
+    optimizer2 = optim.Adam(net.parameters(),  lr=lr_2)
+    w.add_text("Experiment Parameters","Hidden Units: {} Number of episodes: {} Trajectory Size: {} Adam Learning Rate 1: {} Adam Learning Rate 2: {}".format(neurons,num_episodes,num_trajectory,lr_1,lr_2))
+    # scheduler2 = LambdaLR(optimizer2,lr_lambda=cyclic(120))
+    # optimizer3 = optim.SGD(net.parameters(),  lr=1e-5,momentum=0.8)
     for episode in range(num_episodes):
         # print(episode)
         # before_weights_list = layerMag(net)
@@ -131,12 +135,8 @@ def trainModel(probability,neurons):
         ################################################################
         if episode<200:
             optimizer = optimizer1
-        elif episode<400:
-            optimizer = optimizer2
-            scheduler2.step()
         else:
-            optimizer = optimizer3
-            scheduler3.step()
+            optimizer = optimizer2
         optimizer.zero_grad()
         total_loss.backward()
         optimizer.step()
@@ -151,32 +151,30 @@ def trainModel(probability,neurons):
 
 
         after_weights = netMag(net)
-        # w.add_scalar('Weight Change', abs(before_weights-after_weights),count)
-    # w.close()
+        w.add_scalar('Weight Change', abs(before_weights-after_weights),count)
+    w.close()
     return net
 ################################################################
 
-neuron_parameters = [20,30,40,50]
-probability_parameters = [0.2,0.3,0.4,0.5]
-x,y = len(probability_parameters), len(neuron_parameters)
+neuron_parameters = [8,10,12,14,16,18]
+x,y = len(neuron_parameters), len(neuron_parameters)
 average_run_table = np.zeros((x,y))
 std_table = np.zeros((x,y))
 
 min_runs = 500
 run_count =0
-for i,prob in enumerate(probability_parameters):
-    for j,neuron in enumerate(neuron_parameters):
-        run_count +=1
-        print("Run {}",run_count)
-        model = trainModel(prob, neuron)
-        # average_runs = evaluateModel(model)
-        average_runs, std = averageModelRuns(model)
-        print("Hidden Units: {}, Dropout Prob: {}".format(neuron,prob))
-        print("Mean runs: {}, Standard Deviation: {}".format(average_runs,std))
-        average_run_table[i,j] = average_runs
-        std_table[i,j] = std
-        if average_runs<min_runs:
-            best_model = model
-            min_runs = average_runs
+for j,neuron in enumerate(neuron_parameters):
+    run_count +=1
+    print("Run {}",run_count)
+    model = trainModel(neuron)
+    # average_runs = evaluateModel(model)
+    average_runs, std = averageModelRuns(model)
+    print("Hidden Units: {}".format(neuron))
+    print("Mean runs: {}, Standard Deviation: {}".format(average_runs,std))
+    average_run_table[i,j] = average_runs
+    std_table[i,j] = std
+    if average_runs<min_runs:
+        best_model = model
+        min_runs = average_runs
 
-torch.save(best_model.state_dict(),'best_model.pt')
+torch.save(best_model.state_dict(),'best_reward_to_go_model.pt')
