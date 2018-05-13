@@ -46,6 +46,12 @@ from utils import *
 from functions import *
 
 ################################################################
+def baselineTune(probs,actions,reward,baseline,episode):
+    if (abs(reward)<abs(baseline)) & (episode>400) & (baseline<100):
+        return LogLoss(probs,actions,reward,baseline)
+    else:
+        return LogLoss(probs,actions,baseline,baseline)
+
 def getTrajectoryLoss(net,env,count,baseline,episode,w=None):
     num_trajectory=16
     local_count =count
@@ -53,8 +59,8 @@ def getTrajectoryLoss(net,env,count,baseline,episode,w=None):
         local_count +=1
         trajectory, actions, reward = sampleTrajectory(net,env)
         probs = net(numpyFormat(trajectory).float())
+        traj_loss = baselineTune(probs,actions,reward,baseline,episode)
         
-        traj_loss = LogLoss(probs,actions,reward,baseline)
         baseline = 0.99*baseline + 0.01*reward
         if i == 0:
             total_loss = traj_loss
@@ -156,10 +162,29 @@ def trainModel(neurons):
     return net
 ################################################################
 
-neuron_parameters = [8,10,12,14,16,18]
-x,y = len(neuron_parameters), len(neuron_parameters)
-average_run_table = np.zeros((x,y))
-std_table = np.zeros((x,y))
+# neuron_parameters = [16,18,20,22]
+# x,y = len(neuron_parameters), len(neuron_parameters)
+# average_run_table = np.zeros((x,y))
+# std_table = np.zeros((x,y))
+
+# min_runs = 500
+# run_count =0
+# for j,neuron in enumerate(neuron_parameters):
+    # run_count +=1
+    # print("Run {}",run_count)
+    # model = trainModel(neuron)
+    # # average_runs = evaluateModel(model)
+    # average_runs, std = averageModelRuns(model)
+    # print("Hidden Units: {}".format(neuron))
+    # print("Mean runs: {}, Standard Deviation: {}".format(average_runs,std))
+    # average_run_table[i,j] = average_runs
+    # std_table[i,j] = std
+    # if average_runs<min_runs:
+        # best_model = model
+        # min_runs = average_runs
+neuron_parameters = [16,18,20,22]
+average_run_table = []
+std_table = []
 
 min_runs = 500
 run_count =0
@@ -171,10 +196,10 @@ for j,neuron in enumerate(neuron_parameters):
     average_runs, std = averageModelRuns(model)
     print("Hidden Units: {}".format(neuron))
     print("Mean runs: {}, Standard Deviation: {}".format(average_runs,std))
-    average_run_table[i,j] = average_runs
-    std_table[i,j] = std
+    average_run_table.append(average_runs)
+    std_table.append(std_table)
     if average_runs<min_runs:
         best_model = model
         min_runs = average_runs
 
-torch.save(best_model.state_dict(),'best_reward_to_go_model.pt')
+torch.save(best_model.state_dict(),'best_baseline_tuning_model.pt')
