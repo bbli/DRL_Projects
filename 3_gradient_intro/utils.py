@@ -3,6 +3,27 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torch
 
+import getch
+# keyboard conttrols
+# a -> left, s -> don't move, d -> right
+def humanInput():
+    invalid = True
+    while invalid:
+        char = getch.getch()
+        if char == 'a':
+            a = 0
+            break
+        elif char == 's':
+            a = 1
+            break
+        elif char == 'd':
+            a = 2
+            break
+        elif char == 'b':
+            invalid = False
+            a = 3
+    return a
+
 def oneHotState(observation):
     ## np.identity so we can one hot encode the state space
     return np.identity(16)[observation:observation+1]

@@ -101,6 +101,7 @@ def generateNetwork(neurons,env):
         count=0
         baseline = -500
         for episode in range(num_episode):
+            # print(episode)
             total_loss,count,baseline = getTrajectoryLoss(net,env,count,baseline,episode)
             optimizer.zero_grad()
             total_loss.backward()
