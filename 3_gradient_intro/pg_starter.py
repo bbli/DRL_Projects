@@ -92,22 +92,30 @@ class Net(nn.Module):
 
 def generateNetwork(neurons,env):
 
+    start = time.time()
+    t_count = 0
     while True:
+        t_count +=1
+        print(str(t_count)+" try")
         net = Net(neurons)
         net.train()
         optimizer = optim.Adam(net.parameters(),lr=0.01)
-        num_episode=40
-        num_trajectory=16
+        num_episode=30
+        num_trajectory=6
         count=0
         baseline = -500
         for episode in range(num_episode):
             # print(episode)
             total_loss,count,baseline = getTrajectoryLoss(net,env,count,baseline,episode)
+            if total_loss.data[0]>1:
+                ipdb.set_trace()
             optimizer.zero_grad()
             total_loss.backward()
             optimizer.step()
             if total_loss.data[0]>1:
                 print("Generated Net")
+                end = time.time()
+                print("Elapsed Time: {}".format(end-start))
                 return net
 
 

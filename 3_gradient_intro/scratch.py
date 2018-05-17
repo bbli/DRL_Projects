@@ -22,14 +22,14 @@ class Net(nn.Module):
         return F.softmax(x)
 
 net = Net(16)
-net.load_state_dict(torch.load('May04-19:11.pt'))
+net.load_state_dict(torch.load('models/May04-19:11.pt'))
 
 best_model = Net(18)
-best_model.load_state_dict(torch.load('lowest_std.pt'))
+best_model.load_state_dict(torch.load('models/lowest_std.pt'))
 
 # count = evaluateModel(net)
 # print(count)
-# print(averageModelRuns(net))
+print(averageModelRuns(net))
 
 data = torch.ones(5,6)
 data = Variable(data).float()

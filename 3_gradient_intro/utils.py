@@ -2,6 +2,7 @@ from torch.autograd import Variable
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
+import time
 
 import getch
 # keyboard conttrols
@@ -173,3 +174,12 @@ def cyclic(period):
         modulus = episode % period
         return 1/(1+0.05*modulus)
     return f
+
+def timeit(f):
+    def wrapper(*args):
+        start = time.time()
+        x = f(*args)
+        end = time.time()
+        print("Elapsed Time: {}".format(end-start))
+        return x
+    return wrapper

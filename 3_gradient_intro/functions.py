@@ -117,6 +117,7 @@ def randomWalk():
             env.close()
             return 0
 ################################################################
+@timeit
 def averageModelRuns(model):
     env = gym.make('Acrobot-v1')
     num_trials = 100
