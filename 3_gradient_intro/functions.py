@@ -89,7 +89,8 @@ def getTrajectoryLoss(net,env,count,baseline,episode,w=None):
         local_count +=1
         trajectory, actions, reward = sampleTrajectory(net,env)
         probs = net(numpyFormat(trajectory).float())
-        traj_loss = baselineTune(probs,actions,reward,baseline,episode)
+        # traj_loss = baselineTune(probs,actions,reward,baseline,episode)
+        traj_loss = LogLoss(probs,actions,reward,baseline)
         
         baseline = 0.99*baseline + 0.01*reward
         if i == 0:
@@ -155,15 +156,12 @@ def getBaselineTune(nodes_list,reward,baseline,episode):
         return getLogLoss(nodes_list,reward,baseline)
 ################################################################
     
-def getTotalLoss(net,env,count,baseline,episode,w=None):
-    num_trajectory=16
+def getTotalLoss(net,env,count,baseline,episode,num_trajectory,w=None):
     local_count =count
     for i in range(num_trajectory):
         local_count +=1
 
         nodes_list, reward = getNodesAndReward(net,env)
-        if abs(reward)<500:
-            ipdb.set_trace()
         # traj_loss = getLogLoss(nodes_list,reward,baseline)
         traj_loss = getBaselineTune(nodes_list,reward,baseline,episode)
         
