@@ -47,13 +47,13 @@ from functions import *
 
 ################################################################
 def baselineTune(probs,actions,reward,baseline,episode):
-    if (abs(reward)<abs(baseline)) & (episode>400) & (baseline<100):
+    if (episode>400) & (abs(reward)<abs(baseline)) & (baseline<100):
         return LogLoss(probs,actions,reward,baseline)
     else:
         return LogLoss(probs,actions,baseline,baseline)
 
 def getTrajectoryLoss(net,env,count,baseline,episode,w=None):
-    num_trajectory=16
+    num_trajectory=10
     local_count =count
     for i in range(num_trajectory):
         local_count +=1
@@ -80,23 +80,23 @@ def getTrajectoryLoss(net,env,count,baseline,episode,w=None):
         w.add_scalar('Loss', total_loss.data[0],episode)
     return total_loss,local_count,baseline
 ################################################################
+class Net(nn.Module):
+    def __init__(self,neurons):
+        super(Net, self).__init__()
+        self.fc1 = nn.Linear(6,neurons)
+        self.fc2 = nn.Linear(neurons,3)
+    def forward(self, x):
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        return F.softmax(x,dim=0)
 
 def generateNetwork(neurons,env):
-    class Net(nn.Module):
-        def __init__(self):
-            super(Net, self).__init__()
-            self.fc1 = nn.Linear(6,neurons)
-            self.fc2 = nn.Linear(neurons,3)
-        def forward(self, x):
-            x = F.relu(self.fc1(x))
-            x = self.fc2(x)
-            return F.softmax(x)
 
     while True:
-        net = Net()
+        net = Net(neurons)
         net.train()
         optimizer = optim.Adam(net.parameters(),lr=0.01)
-        num_episode=100
+        num_episode=40
         num_trajectory=16
         count=0
         baseline = -500
@@ -107,6 +107,7 @@ def generateNetwork(neurons,env):
             total_loss.backward()
             optimizer.step()
             if total_loss.data[0]>1:
+                print("Generated Net")
                 return net
 
 
@@ -123,7 +124,7 @@ def trainModel(neurons):
 
     ################################################################
     count = 0
-    num_episodes = 1200
+    num_episodes = 800
     baseline = -500
     num_trajectory = 16
     lr_1 = 0.01

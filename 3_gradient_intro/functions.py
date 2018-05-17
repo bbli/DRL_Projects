@@ -7,18 +7,18 @@ import gym
 import time
 
 ################################################################
-def getTrajectories(net,env):
-    batch_size=2
-    trajectory_list=[]
-    actions_list=[]
-    reward_list=[]
-    for _ in range(batch_size):
-        trajectory,actions,total_reward = sampleTrajectory(net,env)
-        # ipdb.set_trace()
-        trajectory_list.append(trajectory) 
-        actions_list.append(actions_list)
-        reward_list.append(total_reward)
-    return np.array(trajectory_list),np.array(actions_list),np.array(reward_list)
+# def getTrajectories(net,env):
+    # batch_size=2
+    # trajectory_list=[]
+    # actions_list=[]
+    # reward_list=[]
+    # for _ in range(batch_size):
+        # trajectory,actions,total_reward = sampleTrajectory(net,env)
+        # # ipdb.set_trace()
+        # trajectory_list.append(trajectory) 
+        # actions_list.append(actions_list)
+        # reward_list.append(total_reward)
+    # return np.array(trajectory_list),np.array(actions_list),np.array(reward_list)
 
 #########################
 def sampleTrajectory(net,env):
