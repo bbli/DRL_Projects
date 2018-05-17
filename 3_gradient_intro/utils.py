@@ -189,3 +189,23 @@ def updateNetwork(optimizer, loss, scheduler=None):
     optimizer.step()
     if scheduler:
         scheduler.step()
+def getOutput(net,state):
+    state_variable = numpyFormat(state).float()
+    return net(state_variable)
+
+def getOutputAction(output,force=False):
+    probability = output.data.numpy().copy()
+    if force:
+        return np.argmax(probability)
+    else:
+        return np.random.choice([0,1,2],p=probability)
+
+def getAction(net,state,force=False):
+    state = numpyFormat(state).float()
+
+    output = net(state).data.numpy()
+    action = np.random.choice([0,1,2],p=output)
+    if force:
+        action = np.argmax(output)
+    return action
+

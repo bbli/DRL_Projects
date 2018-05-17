@@ -5,22 +5,63 @@ import numpy as np
 import getch
 import gym
 import time
+# import warnings
+# warnings.filterwarnings("error")
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
 
-################################################################
-# def getTrajectories(net,env):
-    # batch_size=2
-    # trajectory_list=[]
-    # actions_list=[]
-    # reward_list=[]
-    # for _ in range(batch_size):
-        # trajectory,actions,total_reward = sampleTrajectory(net,env)
-        # # ipdb.set_trace()
-        # trajectory_list.append(trajectory) 
-        # actions_list.append(actions_list)
-        # reward_list.append(total_reward)
-    # return np.array(trajectory_list),np.array(actions_list),np.array(reward_list)
+from utils import *
 
-#########################
+class Net(nn.Module):
+    def __init__(self,neurons):
+        super(Net, self).__init__()
+        self.fc1 = nn.Linear(6,neurons)
+        self.fc2 = nn.Linear(neurons,3)
+    def forward(self, x):
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        return F.softmax(x,dim=0)
+
+def generateNetwork(neurons,env):
+
+    # start = time.time()
+    while True:
+        net = Net(neurons)
+        net.train()
+        optimizer = optim.Adam(net.parameters(),lr=0.01)
+        num_episode=30
+        num_trajectory=6
+        count=0
+        baseline = -500
+        for episode in range(num_episode):
+            # print(episode)
+            total_loss,count,baseline = getTrajectoryLoss(net,env,count,baseline,episode)
+            # total_loss,count,baseline = getTotalLoss(net,env,count,baseline,episode)
+            updateNetwork(optimizer,total_loss)
+            if total_loss.data[0]>1:
+                print("Generated Net")
+                # end = time.time()
+                # print("Elapsed Time: {}".format(end-start))
+                return net
+
+################ **Loss all at Once** ##################
+def LogLoss(probs, actions, reward, baseline):
+    for i,(prob,action) in enumerate(zip(probs,actions)):
+        if i ==0:
+            total_loss = torch.log(prob[action])
+        else:
+            total_loss += torch.log(prob[action])
+    # negative in front since optimizer does gradient descent
+    total_loss = torch.mul(total_loss,-1)
+    return torch.mul(total_loss,reward-baseline)
+
+def baselineTune(probs,actions,reward,baseline,episode):
+    if (episode>400) & (abs(reward)>abs(baseline)) & (baseline<100):
+        return LogLoss(probs,actions,baseline,baseline)
+    else:
+        return LogLoss(probs,actions,reward,baseline)
+
 def sampleTrajectory(net,env):
     trajectory=[]
     actions=[]
@@ -41,103 +82,107 @@ def sampleTrajectory(net,env):
         else:
             trajectory.append(state)
 
-def getAction(net,state,force=False):
-    state = numpyFormat(state).float()
-
-    output = net(state).data.numpy()
-    action = np.random.choice([0,1,2],p=output)
-    if force:
-        action = np.argmax(output)
-    return action
-
-#########################
-################################################################
-
-def LogLoss(probs, actions, reward, baseline):
-    for i,(prob,action) in enumerate(zip(probs,actions)):
-        if i ==0:
-            total_loss = torch.log(prob[action])
+def getTrajectoryLoss(net,env,count,baseline,episode,w=None):
+    num_trajectory=10
+    local_count =count
+    for i in range(num_trajectory):
+        local_count +=1
+        trajectory, actions, reward = sampleTrajectory(net,env)
+        probs = net(numpyFormat(trajectory).float())
+        traj_loss = baselineTune(probs,actions,reward,baseline,episode)
+        
+        baseline = 0.99*baseline + 0.01*reward
+        if i == 0:
+            total_loss = traj_loss
         else:
-            total_loss += torch.log(prob[action])
-    # negative in front since optimizer does gradient descent
-    total_loss = torch.mul(total_loss,-1)
-    return torch.mul(total_loss,reward-baseline)
+            total_loss += traj_loss
 
-def showModel(net):
-    # print("This is sampling from the untrained network")
-    env = gym.make('Acrobot-v1')
-    state = env.reset()
-    count =0
-    while True:
-        count += 1
-        env.render()
-        action=getAction(net,state)
-        state,reward,done,info = env.step(action)
-        # time.sleep(0.1)
-        if done == True:
-            print("Click any key to close the environment")
-            getch.getch()
-            env.close()
-            # return count
-            print("Number of steps: ",count)
-            break
-
-def tryEnvironment():
-    env = gym.make('Acrobot-v1')
-    state = env.reset()
-    count =0
-    while True:
-        count += 1
-        env.render()
-        action=humanInput()
-        if action == 3:
-            env.close()
-            break
-        state,reward,done,info = env.step(action)
-        if done == True:
-            print("Number of steps: ",count)
-            print("Click any key to close the environment")
-            getch.getch()
-            env.close()
-            break
-            # return count
-
-def randomWalk():
-    env = gym.make('Acrobot-v1')
-    print("This is just random action sampling")
-    env.reset()
-    while True:
-        env.render()
-        action = env.action_space.sample()
-        state, reward, done, info = env.step(action)
-        time.sleep(0.04)
-        if done == True:
-            print("Click any key to close the environment")
-            getch.getch()
-            env.close()
-            return 0
+        ################ **Logging** ##################
+        if w:
+            w.add_scalar('Reward',reward,local_count)
+            w.add_scalar('Baseline',baseline,local_count)
+        ##############################################################
+    ## Averaging to create loss estimator
+    total_loss = torch.mul(total_loss,1/num_trajectory)
+    ################ **More Logging** ##################
+    
+    if w:
+        w.add_scalar('Loss', total_loss.data[0],episode)
+    return total_loss,local_count,baseline
 ################################################################
-@timeit
-def averageModelRuns(model):
-    env = gym.make('Acrobot-v1')
-    num_trials = 100
-    counts_list=[]
-    for _ in range(num_trials):
-        state = env.reset()
-        count = evaluateModel(model)
-        counts_list.append(count)
-    counts_list = np.array(counts_list)
-    return counts_list.mean(), counts_list.std(ddof=1)
 
-def evaluateModel(net):
-    env = gym.make('Acrobot-v1')
+
+
+################ **Loss on the Go** ##################
+################################################################
+def getNodesAndReward(net,env):
+    # no traj list b/c I am not passing back into net again
+    # no actions list b/c I already used it to create a loss graph
+    # Yes reward
+    '''
+    Returns: total reward
+    Returns: list of output nodes, already filterd by the action
+    '''
     state = env.reset()
-    net.eval()
-    count =0
+    total_reward =0
+    output_nodes_list=[]
     while True:
-        count += 1
-        action=getAction(net,state)
+        probs = getOutput(net,state)
+        action = getOutputAction(probs)
+        output_nodes_list.append(probs[action])
+
         state,reward,done,info = env.step(action)
+        total_reward += reward
         if done == True:
-            return count
+            return output_nodes_list,total_reward
+################################################################
+
+
+def getLogLoss(nodes_list,reward,baseline):
+    for i,node in enumerate(nodes_list):
+        if i == 0:
+            traj_loss = torch.log(node)
+        else:
+            traj_loss += torch.log(node)
+    # negative in front since optimizer does gradient descent
+    traj_loss = torch.mul(traj_loss,-1)
+    return torch.mul(traj_loss,reward-baseline)
+
+def getBaselineTune(nodes_list,reward,baseline,episode):
+    if (abs(reward)>abs(baseline)) & (episode>400) & (baseline<100):
+        return getLogLoss(nodes_list,baseline,baseline)
+    else:
+        return getLogLoss(nodes_list,reward,baseline)
+################################################################
+    
+def getTotalLoss(net,env,count,baseline,episode,w=None):
+    num_trajectory=16
+    local_count =count
+    for i in range(num_trajectory):
+        local_count +=1
+
+        nodes_list, reward = getNodesAndReward(net,env)
+        if abs(reward)<500:
+            ipdb.set_trace()
+        # traj_loss = getLogLoss(nodes_list,reward,baseline)
+        traj_loss = getBaselineTune(nodes_list,reward,baseline,episode)
+        
+        baseline = 0.99*baseline + 0.01*reward
+        if i == 0:
+            total_loss = traj_loss
+        else:
+            total_loss += traj_loss
+
+        ################ **Logging** ##################
+        if w:
+            w.add_scalar('Reward',reward,local_count)
+            w.add_scalar('Baseline',baseline,local_count)
+        ##############################################################
+    ## Averaging to create loss estimator
+    total_loss = torch.mul(total_loss,1/num_trajectory)
+    ################ **More Logging** ##################
+    
+    if w:
+        w.add_scalar('Loss', total_loss.data[0],episode)
+    return total_loss,local_count,baseline
 

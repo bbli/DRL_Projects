@@ -44,87 +44,13 @@ import ipdb
 
 from utils import *
 from functions import *
-
-################################################################
-def baselineTune(probs,actions,reward,baseline,episode):
-    if (episode>400) & (abs(reward)<abs(baseline)) & (baseline<100):
-        return LogLoss(probs,actions,reward,baseline)
-    else:
-        return LogLoss(probs,actions,baseline,baseline)
-
-def getTrajectoryLoss(net,env,count,baseline,episode,w=None):
-    num_trajectory=10
-    local_count =count
-    for i in range(num_trajectory):
-        local_count +=1
-        trajectory, actions, reward = sampleTrajectory(net,env)
-        probs = net(numpyFormat(trajectory).float())
-        traj_loss = baselineTune(probs,actions,reward,baseline,episode)
-        
-        baseline = 0.99*baseline + 0.01*reward
-        if i == 0:
-            total_loss = traj_loss
-        else:
-            total_loss += traj_loss
-
-        ################ **Logging** ##################
-        if w:
-            w.add_scalar('Reward',reward,local_count)
-            w.add_scalar('Baseline',baseline,local_count)
-        ##############################################################
-    ## Averaging to create loss estimator
-    total_loss = torch.mul(total_loss,1/num_trajectory)
-    ################ **More Logging** ##################
-    
-    if w:
-        w.add_scalar('Loss', total_loss.data[0],episode)
-    return total_loss,local_count,baseline
-################################################################
-class Net(nn.Module):
-    def __init__(self,neurons):
-        super(Net, self).__init__()
-        self.fc1 = nn.Linear(6,neurons)
-        self.fc2 = nn.Linear(neurons,3)
-    def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = self.fc2(x)
-        return F.softmax(x,dim=0)
-
-def generateNetwork(neurons,env):
-
-    start = time.time()
-    t_count = 0
-    while True:
-        t_count +=1
-        print(str(t_count)+" try")
-        net = Net(neurons)
-        net.train()
-        optimizer = optim.Adam(net.parameters(),lr=0.01)
-        num_episode=30
-        num_trajectory=6
-        count=0
-        baseline = -500
-        for episode in range(num_episode):
-            # print(episode)
-            total_loss,count,baseline = getTrajectoryLoss(net,env,count,baseline,episode)
-            if total_loss.data[0]>1:
-                ipdb.set_trace()
-            optimizer.zero_grad()
-            total_loss.backward()
-            optimizer.step()
-            if total_loss.data[0]>1:
-                print("Generated Net")
-                end = time.time()
-                print("Elapsed Time: {}".format(end-start))
-                return net
+from Environment import *
 
 
-def trainModel(neurons):
+@timeit
+def trainModel(environment,neurons):
     ################ **Defining Model and Environment** ##################
-
-    env = gym.make('Acrobot-v1')
-    net = generateNetwork(neurons,env)
-    w = SummaryWriter()
+    env = gym.make(environment.environment)
     # print(env.action_space)
     # print(env.observation_space)
     # showModel(net)
@@ -191,6 +117,7 @@ def trainModel(neurons):
     # if average_runs<min_runs:
         # best_model = model
         # min_runs = average_runs
+environment = EnvironmentClass('Acrobot-v1')
 neuron_parameters = [16,18,20,22]
 average_run_table = []
 std_table = []
@@ -200,9 +127,9 @@ run_count =0
 for j,neuron in enumerate(neuron_parameters):
     run_count +=1
     print("Run {}",run_count)
-    model = trainModel(neuron)
+    model = trainModel(environment,neuron)
     # average_runs = evaluateModel(model)
-    average_runs, std = averageModelRuns(model)
+    average_runs, std = environment.averageModelRuns(model)
     print("Hidden Units: {}".format(neuron))
     print("Mean runs: {}, Standard Deviation: {}".format(average_runs,std))
     average_run_table.append(average_runs)

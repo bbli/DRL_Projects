@@ -69,3 +69,5 @@ data = Variable(data).float()
         # average_runs= i+j
         # average_run_table[i,j] = average_runs
 
+
+

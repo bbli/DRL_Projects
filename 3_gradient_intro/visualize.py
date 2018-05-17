@@ -5,6 +5,7 @@ import ipdb
 
 from functions import *
 from utils import *
+from Environment import *
 
 class Net(nn.Module):
     def __init__(self,neurons):
@@ -21,12 +22,17 @@ class Net(nn.Module):
         # print("Shape: {}".format(x.shape))
         return F.softmax(x)
 
-tryEnvironment()
+environment = Environment('Acrobot-v1')
+environment.tryEnvironment()
 first_model = Net(16)
 first_model.load_state_dict(torch.load('models/May04-19:11.pt'))
-showModel(net)
 
-best_model = Net(18)
-best_model.load_state_dict(torch.load('models/lowest_std.pt'))
-showModel(best_model)
+print(environment.averageModelRuns(first_model))
+
+print(averageModelRuns(first_model))
+# environment.showModel(first_model)
+
+# best_model = Net(18)
+# best_model.load_state_dict(torch.load('models/lowest_std.pt'))
+# environment.showModel(best_model)
 
