@@ -200,12 +200,14 @@ def getOutputAction(output,force=False):
     else:
         return np.random.choice([0,1,2],p=probability)
 
-def getAction(net,state,force=False):
+def getAction(net,state):
     state = numpyFormat(state).float()
 
     output = net(state).data.numpy()
-    action = np.random.choice([0,1,2],p=output)
-    if force:
-        action = np.argmax(output)
-    return action
+    top_prob = np.max(output)
+    if top_prob>0.95:
+        return np.argmax(output)
+    else:
+        action = np.random.choice([0,1,2],p=output)
+        return action
 

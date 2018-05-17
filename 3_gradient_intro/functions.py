@@ -23,7 +23,7 @@ class Net(nn.Module):
         x = self.fc2(x)
         return F.softmax(x,dim=0)
 
-def generateNetwork(neurons,env):
+def generateNetwork(env,neurons):
 
     # start = time.time()
     while True:

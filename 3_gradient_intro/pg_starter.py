@@ -51,6 +51,8 @@ from Environment import *
 def trainModel(environment,neurons):
     ################ **Defining Model and Environment** ##################
     env = gym.make(environment.environment)
+    net = generateNetwork(env,neurons)
+    w = SummaryWriter()
     # print(env.action_space)
     # print(env.observation_space)
     # showModel(net)
@@ -58,16 +60,16 @@ def trainModel(environment,neurons):
 
     ################################################################
     count = 0
-    num_episodes = 800
+    num_episodes = 1000
     baseline = -500
     num_trajectory = 16
     lr_1 = 0.01
-    lr_2 = 3e-3
+    lr_2 = 4e-3
     optimizer1 = optim.Adam(net.parameters(), lr=lr_1)
-    optimizer2 = optim.Adam(net.parameters(),  lr=lr_2)
-    w.add_text("Experiment Parameters","Hidden Units: {} Number of episodes: {} Trajectory Size: {} Adam Learning Rate 1: {} Adam Learning Rate 2: {}".format(neurons,num_episodes,num_trajectory,lr_1,lr_2))
-    # scheduler2 = LambdaLR(optimizer2,lr_lambda=cyclic(120))
-    # optimizer3 = optim.SGD(net.parameters(),  lr=1e-5,momentum=0.8)
+    # optimizer2 = optim.Adam(net.parameters(),  lr=lr_2)
+    w.add_text("Experiment Parameters","Hidden Units: {} Number of episodes: {} Trajectory Size: {} Adam Learning Rate 1: {} SGD Learning Rate 2: {}".format(neurons,num_episodes,num_trajectory,lr_1,lr_2))
+    optimizer2 = optim.SGD(net.parameters(),  lr=lr_2,momentum=0.8, nesterov = True)
+    scheduler2 = LambdaLR(optimizer2,lr_lambda=cyclic(210))
     for episode in range(num_episodes):
         # print(episode)
         # before_weights_list = layerMag(net)
@@ -76,19 +78,9 @@ def trainModel(environment,neurons):
         total_loss, count, baseline = getTrajectoryLoss(net,env,count,baseline,episode,w)
         ################################################################
         if episode<200:
-            optimizer = optimizer1
+            updateNetwork(optimizer1,total_loss)
         else:
-            optimizer = optimizer2
-
-        updateNetwork(optimizer,total_loss)
-
-
-        # # after_weights_list =layerMag(net)
-        # # relDiff_list = relDiff(before_weights_list,after_weights_list)
-        # # relDiff_dict = listToDict(relDiff_list)
-        # # w.add_scalars('LayerChanges',relDiff_dict,count)
-        # # weight_change = totalDiff(before_weights_list,after_weights_list)
-        # # w.add_scalar('Weight Change',weight_change,count)
+            updateNetwork(optimizer2,total_loss,scheduler2)
 
 
         after_weights = netMag(net)
