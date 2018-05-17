@@ -175,6 +175,20 @@ def cyclic(period):
         return 1/(1+0.05*modulus)
     return f
 
+def cyclicLengthen(period):
+    def f(episode):
+        cycle_number= episode // period
+        if cycle_number>3:
+            modulus = episode % (4*period)
+            return 1/(1+0.05*modulus)
+        if cycle_number>1:
+            modulus = episode % (2*period)
+            return 1/(1+0.05*modulus)
+        else:
+            modulus = episode % period
+            return 1/(1+0.05*modulus)
+    return f
+
 def timeit(f):
     def wrapper(*args):
         start = time.time()
@@ -193,9 +207,10 @@ def getOutput(net,state):
     state_variable = numpyFormat(state).float()
     return net(state_variable)
 
-def getOutputAction(output,force=False):
+def getOutputAction(output):
     probability = output.data.numpy().copy()
-    if force:
+    top_prob = np.max(probability)
+    if top_prob>0.98:
         return np.argmax(probability)
     else:
         return np.random.choice([0,1,2],p=probability)
@@ -205,7 +220,7 @@ def getAction(net,state):
 
     output = net(state).data.numpy()
     top_prob = np.max(output)
-    if top_prob>0.95:
+    if top_prob>0.98:
         return np.argmax(output)
     else:
         action = np.random.choice([0,1,2],p=output)
