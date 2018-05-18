@@ -131,4 +131,4 @@ for j,neuron in enumerate(neuron_parameters):
         best_model = model
         min_runs = average_runs
 
-torch.save(best_model.state_dict(),'best_baseline_tuning_model.pt')
+# torch.save(best_model.state_dict(),'best_baseline_tuning_model.pt')

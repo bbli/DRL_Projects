@@ -22,15 +22,16 @@ class Net(nn.Module):
         # print("Shape: {}".format(x.shape))
         return F.softmax(x)
 
-environment = Environment('Acrobot-v1')
+environment = EnvironmentClass('Acrobot-v1')
 environment.tryEnvironment()
 first_model = Net(16)
-first_model.load_state_dict(torch.load('models/May04-19:11.pt'))
+# first_model.load_state_dict(torch.load('models/May04-19:11.pt'))
+first_model.load_state_dict(torch.load('final_baseline_mixed_model.pt'))
 
 print(environment.averageModelRuns(first_model))
 
-print(averageModelRuns(first_model))
-# environment.showModel(first_model)
+# print(averageModelRuns(first_model))
+environment.showModel(first_model)
 
 # best_model = Net(18)
 # best_model.load_state_dict(torch.load('models/lowest_std.pt'))
