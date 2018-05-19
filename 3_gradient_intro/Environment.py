@@ -60,7 +60,7 @@ class EnvironmentClass():
                 return 0
 
     # @timeit
-    def averageModelRuns(self,model):
+    def averageModelRuns(self,model,w=None):
         env = gym.make(self.environment)
         num_trials = 100
         counts_list=[]
@@ -69,7 +69,10 @@ class EnvironmentClass():
             count = self.evaluateModel(env,model)
             counts_list.append(count)
         counts_list = np.array(counts_list)
-        return counts_list.mean(), counts_list.std(ddof=1)
+        mean, std = counts_list.mean(), counts_list.std(ddof=1)
+        if w:
+            w.add_text("Test Scores","Mean: {} Standard Deviation: {}".format(mean,std))
+        return mean,std
     @staticmethod
     def evaluateModel(env,net):
         state = env.reset()
