@@ -1,0 +1,171 @@
+import ipdb
+import torch 
+from utils import *
+import numpy as np
+import getch
+import gym
+import time
+# import warnings
+# warnings.filterwarnings("error")
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
+
+from utils import *
+
+def humanInput():
+    invalid = True
+    while invalid:
+        char = getch.getch()
+        if char == 'w':
+            return 0
+        elif char == 'a':
+            return 1
+        elif char == 's':
+            return 2
+        elif char == 'd':
+            return 3
+        elif char == 'b':
+            return 'b'
+
+
+
+################ **Loss all at Once** ##################
+def LogLoss(probs, actions, reward, baseline):
+    for i,(prob,action) in enumerate(zip(probs,actions)):
+        if i ==0:
+            total_loss = torch.log(prob[action])
+        else:
+            total_loss += torch.log(prob[action])
+    # negative in front since optimizer does gradient descent
+    total_loss = torch.mul(total_loss,-1)
+    return torch.mul(total_loss,reward-baseline)
+
+def baselineTune(probs,actions,reward,baseline,episode):
+    if (episode>400) & (abs(reward)>abs(baseline)) & (baseline<100):
+        return LogLoss(probs,actions,baseline,baseline)
+    else:
+        return LogLoss(probs,actions,reward,baseline)
+
+def sampleTrajectory(net,env):
+    trajectory=[]
+    actions=[]
+
+    state= env.reset()
+    trajectory.append(state)
+    total_reward = 0
+    while True:
+        action = getAction(net,state) 
+        actions.append(action)
+
+        state, reward, done, info = env.step(action)
+        total_reward += reward
+
+        if done == True:
+            assert len(trajectory) == len(actions), "Unequal states and actions!"
+            return np.array(trajectory),np.array(actions),total_reward
+        else:
+            trajectory.append(state)
+
+def getTrajectoryLoss(net,env,count,baseline,episode,w=None):
+    num_trajectory=10
+    local_count =count
+    for i in range(num_trajectory):
+        local_count +=1
+        trajectory, actions, reward = sampleTrajectory(net,env)
+        probs = net(numpyFormat(trajectory).float())
+        # traj_loss = baselineTune(probs,actions,reward,baseline,episode)
+        traj_loss = LogLoss(probs,actions,reward,baseline)
+        
+        baseline = 0.99*baseline + 0.01*reward
+        if i == 0:
+            total_loss = traj_loss
+        else:
+            total_loss += traj_loss
+
+        ################ **Logging** ##################
+        if w:
+            w.add_scalar('Reward',reward,local_count)
+            w.add_scalar('Baseline',baseline,local_count)
+        ##############################################################
+    ## Averaging to create loss estimator
+    total_loss = torch.mul(total_loss,1/num_trajectory)
+    ################ **More Logging** ##################
+    
+    if w:
+        w.add_scalar('Loss', total_loss.data[0],episode)
+    return total_loss,local_count,baseline
+################################################################
+
+
+
+################ **Loss on the Go** ##################
+################################################################
+def getNodesAndReward(net,env):
+    # no traj list b/c I am not passing back into net again
+    # no actions list b/c I already used it to create a loss graph
+    # Yes reward
+    '''
+    Returns: total reward
+    Returns: list of output nodes, already filterd by the action
+    '''
+    state = env.reset()
+    total_reward =0
+    output_nodes_list=[]
+    while True:
+        probs = getOutput(net,state)
+        action = getOutputAction(probs)
+        output_nodes_list.append(probs[action])
+
+        state,reward,done,info = env.step(action)
+        total_reward += reward
+        if done == True:
+            return output_nodes_list,total_reward
+################################################################
+
+
+def getLogLoss(nodes_list,reward,baseline):
+    for i,node in enumerate(nodes_list):
+        if i == 0:
+            traj_loss = torch.log(node)
+        else:
+            traj_loss += torch.log(node)
+    # negative in front since optimizer does gradient descent
+    traj_loss = torch.mul(traj_loss,-1)
+    return torch.mul(traj_loss,reward-baseline)
+
+def getBaselineTune(nodes_list,reward,baseline,episode):
+    if (abs(reward)>abs(baseline)) & (episode>400) & (baseline<100):
+        return getLogLoss(nodes_list,baseline,baseline)
+    else:
+        return getLogLoss(nodes_list,reward,baseline)
+################################################################
+    
+def getTotalLoss(net,env,count,baseline,episode,num_trajectory,w=None):
+    local_count =count
+    for i in range(num_trajectory):
+        local_count +=1
+
+        nodes_list, reward = getNodesAndReward(net,env)
+        # traj_loss = getLogLoss(nodes_list,reward,baseline)
+        traj_loss = getBaselineTune(nodes_list,reward,baseline,episode)
+        
+        baseline = 0.99*baseline + 0.01*reward
+        if i == 0:
+            total_loss = traj_loss
+        else:
+            total_loss += traj_loss
+
+        ################ **Logging** ##################
+        if w:
+            w.add_scalar('Reward',reward,local_count)
+            w.add_scalar('Baseline',baseline,local_count)
+        ##############################################################
+    ## Averaging to create loss estimator
+    total_loss = torch.mul(total_loss,1/num_trajectory)
+    ################ **More Logging** ##################
+    
+    if w:
+        w.add_scalar('Loss', total_loss.data[0],episode)
+    return total_loss,local_count,baseline
+
