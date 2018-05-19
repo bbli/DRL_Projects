@@ -44,7 +44,7 @@ import ipdb
 
 from utils import *
 from functions import *
-from Environment import *
+from Experiment import *
 
 
 @timeit
@@ -110,25 +110,28 @@ def trainModel(environment,neurons):
     # if average_runs<min_runs:
         # best_model = model
         # min_runs = average_runs
-environment = EnvironmentClass('Acrobot-v1')
-neuron_parameters = [16,18,20,22]
-average_run_table = []
-std_table = []
+# environment = EnvironmentClass('Acrobot-v1')
+AcrobotExperiment = Experiment('Acrobot-v1')
 
+neuron_parameters = [16,18,20,22]
 min_runs = 500
 run_count =0
 for j,neuron in enumerate(neuron_parameters):
-    run_count +=1
-    print("Run {}",run_count)
-    model = trainModel(environment,neuron)
-    # average_runs = evaluateModel(model)
-    average_runs, std = environment.averageModelRuns(model)
-    print("Hidden Units: {}".format(neuron))
-    print("Mean runs: {}, Standard Deviation: {}".format(average_runs,std))
-    average_run_table.append(average_runs)
-    std_table.append(std_table)
-    if average_runs<min_runs:
-        best_model = model
-        min_runs = average_runs
+    with SummaryWriter() as w:
+        run_count +=1
+        print("Run {}",run_count)
+
+
+################################################################
+        model = AcrobotExperiment.trainModel(neuron,w)
+        average_runs, std = AcrobotExperiment.averageModelRuns(model,w)
+################################################################
+
+
+        print("Hidden Units: {}".format(neuron))
+        print("Mean runs: {}, Standard Deviation: {}".format(average_runs,std))
+        if average_runs<min_runs:
+            best_model = model
+            min_runs = average_runs
 
 # torch.save(best_model.state_dict(),'best_baseline_tuning_model.pt')
