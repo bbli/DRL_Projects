@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torch
 import time
+from math import pi,cos
 
 import getch
 # keyboard conttrols
@@ -172,6 +173,12 @@ def cyclicLengthen(period):
             return 1/(1+0.05*modulus)
     return f
 
+def cosine(period):
+    def f(episode):
+        modulus =  episode % period
+        return 0.5*(1.1+cos(pi*modulus/period))
+    return f
+
 def timeit(f):
     def wrapper(*args):
         start = time.time()
@@ -193,10 +200,10 @@ def getOutput(net,state):
 def getOutputAction(output):
     probability = output.data.numpy().copy()
     top_prob = np.max(probability)
-    if top_prob>0.96:
-        return np.argmax(probability)
-    else:
-        return np.random.choice([0,1,2,3],p=probability)
+    # if top_prob>0.99:
+        # return np.argmax(probability)
+    # else:
+    return np.random.choice([0,1,2,3],p=probability)
 
 def getAction(net,state):
     state = numpyFormat(state).float()
