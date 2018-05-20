@@ -67,8 +67,7 @@ def sampleTrajectory(net,env):
         else:
             trajectory.append(state)
 
-def getTrajectoryLoss(net,env,count,baseline,episode,w=None):
-    num_trajectory=10
+def getTrajectoryLoss(net,env,count,baseline,episode,num_trajectory,w=None):
     local_count =count
     for i in range(num_trajectory):
         local_count +=1
