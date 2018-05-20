@@ -146,8 +146,8 @@ def getTotalLoss(net,env,count,baseline,episode,num_trajectory,w=None):
         local_count +=1
 
         nodes_list, reward = getNodesAndReward(net,env)
-        # traj_loss = getLogLoss(nodes_list,reward,baseline)
-        traj_loss = getBaselineTune(nodes_list,reward,baseline,episode)
+        traj_loss = getLogLoss(nodes_list,reward,baseline)
+        # traj_loss = getBaselineTune(nodes_list,reward,baseline,episode)
         
         baseline = 0.99*baseline + 0.01*reward
         if i == 0:
