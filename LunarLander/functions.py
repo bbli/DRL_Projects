@@ -113,8 +113,12 @@ def getNodesAndReward(net,env):
     output_nodes_list=[]
     while True:
         probs = getOutput(net,state)
+        print(probs)
         action = getOutputAction(probs)
-        output_nodes_list.append(probs[action])
+        node = probs[action]
+        # if node.data[0] == 1:
+            # ipdb.set_trace()
+        output_nodes_list.append(node)
 
         state,reward,done,info = env.step(action)
         total_reward += reward
@@ -149,7 +153,7 @@ def getTotalLoss(net,env,count,baseline,episode,num_trajectory,w=None):
         traj_loss = getLogLoss(nodes_list,reward,baseline)
         # traj_loss = getBaselineTune(nodes_list,reward,baseline,episode)
         
-        baseline = 0.99*baseline + 0.01*reward
+        baseline = 0.95*baseline + 0.05*reward
         if i == 0:
             total_loss = traj_loss
         else:

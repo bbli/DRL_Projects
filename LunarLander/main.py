@@ -39,7 +39,7 @@ class Experiment(EnvironmentClass):
         num_episodes = 1000
         ## figured this out experimentally
         baseline = -150
-        num_trajectory = 5
+        num_trajectory = 20
         lr_1 = 0.01
         # optimizer1 = optim.Adam(net.parameters(), lr=lr_1)
         optimizer = optim.SGD(net.parameters(),lr=1e-2,momentum=0.8)
