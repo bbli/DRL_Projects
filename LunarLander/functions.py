@@ -165,10 +165,41 @@ def getTotalLoss(net,env,count,baseline,episode,num_trajectory,w=None):
             w.add_scalar('Baseline',baseline,local_count)
         ##############################################################
     ## Averaging to create loss estimator
+    # if total_loss.data[0] == 0:
+        # ipdb.set_trace()
     total_loss = torch.mul(total_loss,1/num_trajectory)
+    print("Total Loss: ",total_loss.data[0])
     ################ **More Logging** ##################
     
     if w:
         w.add_scalar('Loss', total_loss.data[0],episode)
     return total_loss,local_count,baseline
 
+def getSamples(net,env,num_trajectory):
+    traj_s_a_list =[]
+    traj_nodes_list = []
+    for i in range(num_trajectory):
+        state = env.reset()
+        rewards_list =[]
+        states_list = []
+        nodes_list = []
+        done = False
+        while not done:
+            states_list.append(state)
+
+            probs = getOutput(net,state)
+            action = getOutputAction(probs)
+            state,reward,done,info = env.step(action)
+
+            rewards_list.append(reward) 
+            nodes_list.append(probs[action])
+
+        traj_s_a_list.append((states_list,rewards_list))
+        traj_nodes_list.append(rewards_list)
+    return traj_s_a_list,traj_nodes_list
+
+def fitValueFunction(traj_s_a_list,value_net):
+    for states_list,rewards_list in traj_s_a_list:
+        ## Make sure it adds elementwise
+        targets_list = listFormat(rewards_list) + getTargets(states_list,value_net)
+        ## Hmm, so should I batch or on the go?

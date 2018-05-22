@@ -12,3 +12,8 @@ I decided then to continuously generate  a neural net with random weights and ha
 Finally, I decided to use the network with the smallest average_runs as a starting point for my last exploration. This time, I would bag a model every 100 episodes, in the hopes that I get one which generalizes better than the end results. After a training session is done for one hyperparameter setting, I would evaluate the models for 100 tries and take the model with the smallest average_runs. I would do the same evaluation for all the other "best models" that came out of my grid search. Furthermore, I then had this idea of only updating the network when the reward was greater than the baseline. One of the purposes of the baseline was to change the search from a process of elimination to more of a heuristic search. When the initial baseline is set to -500, the network will only update once the model finds a solution in less than 500 steps. The issue with process of elimination is that while it may decrease the probablity of an undesirable action, updating will cause an increase to the desirable action and the other undesirable action. Whereas with a positive `reward-baseline` you are always increasing the desirable action and decreasing the two other undesirable actions. So I did a grid search across just this "permament baseline". But in the end, all the models I created were basically the same if not worse than the model I achieved on my first try......
 
 * So SGD was prone to blow up, which was why Adam was better
+
+## Lunar Lander
+* discovered what it means to write in a functional style
+* why I didn't grasp it when using numpy(complexity is about the same with numbers)
+* but in practice, top down programming first, functional to refactor

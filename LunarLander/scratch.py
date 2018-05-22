@@ -1,7 +1,9 @@
+import ipdb
 def trainModel(self,neurons,w):
     ################ **Defining Model and Environment** ##################
     env = gym.make(self.environment)
     net = Net(neurons)
+    value_net = Net(10)
     ## adding a pointer to the net
     self.current_model = net
     ################ **Experiment Hyperparameters** ##################
@@ -20,7 +22,12 @@ def trainModel(self,neurons,w):
         before_weights = netMag(net)
         ################# **Training** ###################
         # total_loss, count, baseline = getTrajectoryLoss(net,env,count,baseline,episode,w)
-        total_loss, count, baseline = getTotalLoss(net,env,count,baseline,episode,num_trajectory,w)
+        # total_loss, count, baseline = getTotalLoss(net,env,count,baseline,episode,num_trajectory,w)
+
+        traj_s_a_list, traj_nodes_list = getSamples()
+        ipdb.set_trace()
+        value_net = fitValueFunction(traj_s_a_list,value_net)
+        getTotalLoss(nodes_list,rewards_list,states_list,value_net)
         updateNetwork(optimizer1,total_loss)
         ################################################################
         after_weights = netMag(net)
