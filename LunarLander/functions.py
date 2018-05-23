@@ -168,8 +168,8 @@ def getTotalLoss(net,env,count,baseline,episode,num_trajectory,w=None):
             w.add_scalar('Baseline',baseline,local_count)
         ##############################################################
     ## Averaging to create loss estimator
-    # if total_loss.data[0] == 0:
-        # ipdb.set_trace()
+    if total_loss.data[0] == 0:
+        ipdb.set_trace()
     total_loss = torch.mul(total_loss,1/num_trajectory)
     # print("Total Loss: ",total_loss.data[0])
     ################ **More Logging** ##################

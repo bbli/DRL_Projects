@@ -200,10 +200,10 @@ def getOutput(net,state):
 def getOutputAction(output):
     probability = output.data.numpy().copy()
     top_prob = np.max(probability)
-    # if top_prob>0.99:
-        # return np.argmax(probability)
-    # else:
-    return np.random.choice([0,1,2,3],p=probability)
+    if top_prob>0.975:
+        return np.argmax(probability)
+    else:
+        return np.random.choice([0,1,2,3],p=probability)
 
 def getAction(net,state):
     state = numpyFormat(state).float()
