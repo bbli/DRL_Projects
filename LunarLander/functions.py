@@ -87,6 +87,8 @@ def getTrajectoryLoss(net,env,count,baseline,episode,num_trajectory,w=None):
             w.add_scalar('Reward',reward,local_count)
             w.add_scalar('Baseline',baseline,local_count)
         ##############################################################
+    # if total_loss.data[0] == 0:
+        # ipdb.set_trace()
     ## Averaging to create loss estimator
     total_loss = torch.mul(total_loss,1/num_trajectory)
     ################ **More Logging** ##################
@@ -113,7 +115,7 @@ def getNodesAndReward(net,env):
     output_nodes_list=[]
     while True:
         probs = getOutput(net,state)
-        print(probs)
+        # print(probs)
         action = getOutputAction(probs)
         node = probs[action]
         # if node.data[0] == 1:
@@ -150,6 +152,7 @@ def getTotalLoss(net,env,count,baseline,episode,num_trajectory,w=None):
         local_count +=1
 
         nodes_list, reward = getNodesAndReward(net,env)
+        # print("Reward-Baseline: ",reward-baseline)
         traj_loss = getLogLoss(nodes_list,reward,baseline)
         # traj_loss = getBaselineTune(nodes_list,reward,baseline,episode)
         

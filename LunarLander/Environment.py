@@ -65,13 +65,13 @@ class EnvironmentClass():
             action = env.action_space.sample()
             state, reward, done, info = env.step(action)
             total_reward += reward
-            time.sleep(0.04)
+            # time.sleep(0.04)
             if done == True:
                 print("Reward: ",total_reward)
                 print("Click any key to close the environment")
                 getch.getch()
                 env.close()
-                return 0
+                return total_reward
 
     # @timeit
     def averageModelRuns(self,model,w=None):

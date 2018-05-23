@@ -38,13 +38,13 @@ class Experiment(EnvironmentClass):
         ################ **Experiment Hyperparameters** ##################
         num_episodes = 1000
         ## figured this out experimentally
-        baseline = -150
-        num_trajectory = 20
-        lr_1 = 0.01
-        # optimizer1 = optim.Adam(net.parameters(), lr=lr_1)
-        optimizer = optim.SGD(net.parameters(),lr=1e-2,momentum=0.8)
-        self.optimizer = optimizer
-        scheduler = LambdaLR(optimizer,lr_lambda=cosine(210))
+        baseline = -240
+        num_trajectory = 10
+        lr_1 = 5e-3
+        optimizer = optim.Adam(net.parameters(), lr=lr_1)
+        # optimizer = optim.SGD(net.parameters(),lr=1e-2,momentum=0.8)
+        # self.optimizer = optimizer
+        # scheduler = LambdaLR(optimizer,lr_lambda=cosine(210))
 
 
         w.add_text("Experiment Parameters","Hidden Units: {} Number of episodes: {} Trajectory Size: {} SGD Learning Rate 1: {} ".format(neurons,num_episodes,num_trajectory,lr_1))
@@ -55,7 +55,7 @@ class Experiment(EnvironmentClass):
             
             before_weights = netMag(net)
             ################# **Training** ###################
-            # total_loss, count, baseline = getTrajectoryLoss(net,env,count,baseline,episode,w)
+            # total_loss, count, baseline = getTrajectoryLoss(net,env,count,baseline,episode,num_trajectory,w)
             total_loss, count, baseline = getTotalLoss(net,env,count,baseline,episode,num_trajectory,w)
             updateNetwork(optimizer,total_loss)
             print("Updated Network on episode: ",episode)
@@ -67,6 +67,6 @@ class Experiment(EnvironmentClass):
 Lunar = Experiment()
 os.chdir("single_run")
 w = SummaryWriter()
-model = Lunar.trainModel(10,w)
+model = Lunar.trainModel(36,w)
 w.close()
 print(Lunar.averageModelRuns(model))
