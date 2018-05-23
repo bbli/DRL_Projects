@@ -58,7 +58,7 @@ class Experiment(EnvironmentClass):
             # total_loss, count, baseline = getTrajectoryLoss(net,env,count,baseline,episode,num_trajectory,w)
             total_loss, count, baseline = getTotalLoss(net,env,count,baseline,episode,num_trajectory,w)
             updateNetwork(optimizer,total_loss)
-            print("Updated Network on episode: ",episode)
+            # print("Updated Network on episode: ",episode)
             ################################################################
             after_weights = netMag(net)
             w.add_scalar('Weight Change', abs(before_weights-after_weights),count)

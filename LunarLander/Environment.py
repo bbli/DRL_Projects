@@ -29,12 +29,12 @@ class EnvironmentClass():
                 env.close()
                 break
 
-    def showModel(self,net=None):
+    def showModel(self,model=None):
         # print("This is sampling from the untrained network")
-        if net:
+        if model:
             pass
         else:
-            net = self.current_model
+            model = self.current_model
         env = gym.make(self.environment)
         state = env.reset()
         count =0
@@ -42,7 +42,7 @@ class EnvironmentClass():
         while True:
             count += 1
             env.render()
-            action=getAction(net,state)
+            action=getAction(model,state)
             state,reward,done,info = env.step(action)
             # time.sleep(0.1)
             total_reward += reward
@@ -74,7 +74,11 @@ class EnvironmentClass():
                 return total_reward
 
     # @timeit
-    def averageModelRuns(self,model,w=None):
+    def averageModelRuns(self,model=None,w=None):
+        if model:
+            pass
+        else:
+            model = self.current_model
         env = gym.make(self.environment)
         num_trials = 100
         rewards_list = []
