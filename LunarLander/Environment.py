@@ -29,8 +29,12 @@ class EnvironmentClass():
                 env.close()
                 break
 
-    def showModel(self,net):
+    def showModel(self,net=None):
         # print("This is sampling from the untrained network")
+        if net:
+            pass
+        else:
+            net = self.current_model
         env = gym.make(self.environment)
         state = env.reset()
         count =0
@@ -44,7 +48,7 @@ class EnvironmentClass():
             total_reward += reward
             if done == True:
                 print("Number of steps: ",count)
-                print("Reward: ",reward)
+                print("Reward: ",total_reward)
                 print("Click any key to close the environment")
                 getch.getch()
                 env.close()
