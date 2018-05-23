@@ -219,3 +219,12 @@ def episodePrinter(episode,period):
     if episode % period == 0:
         print("Reached episode {}".format(episode))
 
+def averageAdamLearningRate(optimizer,epsilon,learn_rate):
+    total_delta_w_list = []
+    for i,(key,moment_dict) in enumerate(optimizer.state_dict()['state'].items()):
+        rms = moment_dict['exp_avg_sq'].sqrt()
+        delta_w_tensor = learn_rate*moment_dict['exp_avg']/(rms+epsilon)
+        delta_w_tensor = delta_w_tensor.abs()
+        total_delta_w_list.append(delta_w_tensor.mean())
+    total_delta_w_list = np.array([total_delta_w_list])
+    return total_delta_w_list.mean()

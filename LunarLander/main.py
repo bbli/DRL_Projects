@@ -41,7 +41,8 @@ class Experiment(EnvironmentClass):
         baseline = -240
         num_trajectory = 10
         lr_1 = 5e-3
-        optimizer = optim.Adam(net.parameters(), lr=lr_1)
+        epsilon = 1e-8
+        optimizer = optim.Adam(net.parameters(), lr=lr_1,eps= epsilon)
         # optimizer = optim.SGD(net.parameters(),lr=1e-2,momentum=0.8)
         self.optimizer = optimizer
         # scheduler = LambdaLR(optimizer,lr_lambda=cosine(210))
@@ -52,6 +53,8 @@ class Experiment(EnvironmentClass):
         count = 0
         for episode in range(num_episodes):
             self.episodeLogger(episode)
+            if episode%200 ==0:
+                print("Reached Episode: ",episode)
             
             before_weights = netMag(net)
             ################# **Training** ###################
@@ -60,6 +63,8 @@ class Experiment(EnvironmentClass):
             updateNetwork(optimizer,total_loss)
             # print("Updated Network on episode: ",episode)
             ################################################################
+            avg_lr = averageAdamLearningRate(optimizer,epsilon,lr_1)
+            w.add_scalar('Learning Rate',avg_lr,count)
             after_weights = netMag(net)
             w.add_scalar('Weight Change', abs(before_weights-after_weights),count)
         return net
