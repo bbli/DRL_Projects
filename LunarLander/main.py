@@ -43,7 +43,7 @@ class Experiment(EnvironmentClass):
         lr_1 = 5e-3
         optimizer = optim.Adam(net.parameters(), lr=lr_1)
         # optimizer = optim.SGD(net.parameters(),lr=1e-2,momentum=0.8)
-        # self.optimizer = optimizer
+        self.optimizer = optimizer
         # scheduler = LambdaLR(optimizer,lr_lambda=cosine(210))
 
 

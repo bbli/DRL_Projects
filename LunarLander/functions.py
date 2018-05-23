@@ -140,7 +140,7 @@ def getLogLoss(nodes_list,reward,baseline):
     return torch.mul(traj_loss,reward-baseline)
 
 def getBaselineTune(nodes_list,reward,baseline,episode):
-    if (abs(reward)>abs(baseline)) & (episode>400) & (baseline<100):
+    if (reward>baseline) & (episode>600) & (baseline>0):
         return getLogLoss(nodes_list,baseline,baseline)
     else:
         return getLogLoss(nodes_list,reward,baseline)
@@ -153,8 +153,8 @@ def getTotalLoss(net,env,count,baseline,episode,num_trajectory,w=None):
 
         nodes_list, reward = getNodesAndReward(net,env)
         # print("Reward-Baseline: ",reward-baseline)
-        traj_loss = getLogLoss(nodes_list,reward,baseline)
-        # traj_loss = getBaselineTune(nodes_list,reward,baseline,episode)
+        # traj_loss = getLogLoss(nodes_list,reward,baseline)
+        traj_loss = getBaselineTune(nodes_list,reward,baseline,episode)
         
         baseline = 0.95*baseline + 0.05*reward
         if i == 0:
