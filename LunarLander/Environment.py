@@ -90,6 +90,8 @@ class EnvironmentClass():
         mean, std = rewards_list.mean(), rewards_list.std(ddof=1)
         if w:
             w.add_text("Test Scores","Mean Reward: {} Standard Deviation: {}".format(mean,std))
+
+        self.averageModelRuns_rewards_list = rewards_list
         return mean,std
     @staticmethod
     def evaluateModel(env,net):
