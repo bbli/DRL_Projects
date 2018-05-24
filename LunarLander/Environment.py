@@ -82,15 +82,16 @@ class EnvironmentClass():
         env = gym.make(self.environment)
         num_trials = 100
         rewards_list = []
-        for _ in range(num_trials):
+        for i in range(num_trials):
             state = env.reset()
             tr = self.evaluateModel(env,model)
             rewards_list.append(tr)
+            if w:
+                w.add_scalar("Test Reward",tr,i)
         rewards_list = np.array(rewards_list)
         mean, std = rewards_list.mean(), rewards_list.std(ddof=1)
         if w:
             w.add_text("Test Scores","Mean Reward: {} Standard Deviation: {}".format(mean,std))
-            w.add_scalar("Test Reward",rewards_list)
 
         self.averageModelRuns_rewards_list = rewards_list
         return mean,std

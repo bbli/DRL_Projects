@@ -40,7 +40,7 @@ class Experiment(EnvironmentClass):
         ## figured this out experimentally
         baseline = -240
         num_trajectory = 10
-        lr_1 = 5e-3
+        lr_1 = 3e-3
         epsilon = 1e-8
         optimizer = optim.Adam(net.parameters(), lr=lr_1,eps= epsilon)
         # optimizer = optim.SGD(net.parameters(),lr=1e-2,momentum=0.8)
@@ -48,7 +48,7 @@ class Experiment(EnvironmentClass):
         # scheduler = LambdaLR(optimizer,lr_lambda=cosine(210))
 
 
-        w.add_text("Experiment Parameters","Hidden Units: {} Number of episodes: {} Trajectory Size: {} SGD Learning Rate 1: {} ".format(neurons,num_episodes,num_trajectory,lr_1))
+        w.add_text("Experiment Parameters","Hidden Units(2 Layers): {} Number of episodes: {} Trajectory Size: {} Adam Learning Rate 1: {} ".format(neurons,num_episodes,num_trajectory,lr_1))
         ################################################################
         count = 0
         for episode in range(num_episodes):
@@ -76,7 +76,7 @@ min_reward = 0
 for neuron in neuron_parameters:
     w = SummaryWriter()
     model = Lunar.trainModel(20,w)
-    mean,std = Lunar.averageModelRuns(model,w))
+    average_reward,std = Lunar.averageModelRuns(model,w)
     w.close()
     print("Hidden Units: {}".format(neuron))
     print("Mean runs: {}, Standard Deviation: {}".format(average_reward,std))
