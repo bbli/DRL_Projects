@@ -28,7 +28,7 @@ class Experiment(EnvironmentClass):
     def episodeLogger(self,episode):
         self.episode = episode
 
-    # @timeit
+    @timeit
     def trainModel(self,neurons,w):
         ################ **Defining Model and Environment** ##################
         env = gym.make(self.environment)
@@ -70,8 +70,16 @@ class Experiment(EnvironmentClass):
         return net
 
 Lunar = Experiment()
-os.chdir("single_run")
-w = SummaryWriter()
-model = Lunar.trainModel(20,w)
-print(Lunar.averageModelRuns(model,w))
-w.close()
+# os.chdir("single_run")
+neuron_parameters = [10,15,20]
+min_reward = 0
+for neuron in neuron_parameters:
+    w = SummaryWriter()
+    model = Lunar.trainModel(20,w)
+    mean,std = Lunar.averageModelRuns(model,w))
+    w.close()
+    print("Hidden Units: {}".format(neuron))
+    print("Mean runs: {}, Standard Deviation: {}".format(average_reward,std))
+    if average_reward<min_reward:
+        best_model = model
+        min_reward = average_reward
