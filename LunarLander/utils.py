@@ -217,7 +217,7 @@ def getAction(net,state):
         return action
 def episodePrinter(episode,period):
     if episode % period == 0:
-        print("Reached episode {}".format(episode))
+        print("Reached Episode {}".format(episode))
 
 def averageAdamLearningRate(optimizer,epsilon,learn_rate):
     total_delta_w_list = []

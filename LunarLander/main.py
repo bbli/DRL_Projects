@@ -25,7 +25,7 @@ class Experiment(EnvironmentClass):
         self.environment = string
         self.current_model = None
         self.optimizer = None
-        self.runs_rewards_list = []
+        self.runs_test_rewards_list = []
     def episodeLogger(self,episode):
         self.episode = episode
 
@@ -54,8 +54,7 @@ class Experiment(EnvironmentClass):
         count = 0
         for episode in range(num_episodes):
             self.episodeLogger(episode)
-            if episode%200 ==0:
-                print("Reached Episode: ",episode)
+            episodePrinter(episode,400)
             
             before_weights = netMag(net)
             ################# **Training** ###################
@@ -81,7 +80,7 @@ for neuron in neuron_parameters:
     average_reward,std = Lunar.averageModelRuns(model,w)
     w.close()
     print("Hidden Units: {}".format(neuron))
-    print("Mean runs: {}, Standard Deviation: {}".format(average_reward,std))
+    print("Mean rewards: {}, Standard Deviation: {}".format(average_reward,std))
     if average_reward<min_reward:
         best_model = model
         min_reward = average_reward

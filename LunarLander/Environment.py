@@ -93,7 +93,8 @@ class EnvironmentClass():
         if w:
             w.add_text("Test Scores","Mean Reward: {} Standard Deviation: {}".format(mean,std))
 
-        self.runs_rewards_list.append(rewards_list)
+        self.runs_test_rewards_list.append(rewards_list)
+        self.runs_models_list.append(model)
         return mean,std
 
     @staticmethod
