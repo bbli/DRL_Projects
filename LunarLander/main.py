@@ -65,19 +65,19 @@ class Experiment(EnvironmentClass):
             # print("Updated Network on episode: ",episode)
             ################################################################
             avg_lr = averageAdamLearningRate(optimizer,epsilon,lr_1)
-            w.add_scalar('Learning Rate',avg_lr,count)
+            w.add_scalar('Learning Rate',avg_lr,episode)
             after_weights = netMag(net)
-            w.add_scalar('Weight Change', abs(before_weights-after_weights),count)
+            w.add_scalar('Weight Change', abs(before_weights-after_weights),episode)
         return net
 
 Lunar = Experiment('LunarLander-v2')
 # os.chdir("single_run")
 # os.chdir("debug")
-neuron_parameters = [10,15,20]
+neuron_parameters = [10,15,20,25]
 min_reward = 0
 for neuron in neuron_parameters:
     w = SummaryWriter()
-    model = Lunar.trainModel(20,w)
+    model = Lunar.trainModel(neuron,w)
     average_reward,std = Lunar.averageModelRuns(model,w)
     w.close()
     print("Hidden Units: {}".format(neuron))
