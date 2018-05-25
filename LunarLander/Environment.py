@@ -93,8 +93,9 @@ class EnvironmentClass():
         if w:
             w.add_text("Test Scores","Mean Reward: {} Standard Deviation: {}".format(mean,std))
 
-        self.averageModelRuns_rewards_list = rewards_list
+        self.runs_rewards_list.append(rewards_list)
         return mean,std
+
     @staticmethod
     def evaluateModel(env,net):
         state = env.reset()
@@ -109,6 +110,11 @@ class EnvironmentClass():
             if done == True:
                 return total_reward
 
+    @staticmethod
+    def plotRewards(points):
+        import matplotlib.pyplot as plt
+        plt.plot(points)
+        plt.show()
 
 
 if __name__ == '__main__':

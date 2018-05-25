@@ -21,10 +21,11 @@ class Net(nn.Module):
             return F.softmax(x,dim=1)
 
 class Experiment(EnvironmentClass):
-    def __init__(self):
-        self.environment = 'LunarLander-v2'
+    def __init__(self,string):
+        self.environment = string
         self.current_model = None
         self.optimizer = None
+        self.runs_rewards_list = []
     def episodeLogger(self,episode):
         self.episode = episode
 
@@ -69,8 +70,9 @@ class Experiment(EnvironmentClass):
             w.add_scalar('Weight Change', abs(before_weights-after_weights),count)
         return net
 
-Lunar = Experiment()
+Lunar = Experiment('LunarLander-v2')
 # os.chdir("single_run")
+# os.chdir("debug")
 neuron_parameters = [10,15,20]
 min_reward = 0
 for neuron in neuron_parameters:
