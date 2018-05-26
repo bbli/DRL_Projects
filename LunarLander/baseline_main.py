@@ -38,7 +38,7 @@ class Experiment(EnvironmentClass):
         ## adding a pointer to the net
         self.current_model = net
         ################ **Experiment Hyperparameters** ##################
-        num_episodes = 1000
+        num_episodes = 4000
         ## figured this out experimentally
         baseline = -240
         # num_trajectory = 10
@@ -55,7 +55,7 @@ class Experiment(EnvironmentClass):
         count = 0
         for episode in range(num_episodes):
             self.episodeLogger(episode)
-            episodePrinter(episode,400)
+            # episodePrinter(episode,400)
             
             before_weights = netMag(net)
             ################# **Training** ###################
@@ -71,12 +71,11 @@ class Experiment(EnvironmentClass):
         return net
 
 Lunar = Experiment('LunarLander-v2')
-# os.chdir("single_run")
 # os.chdir("debug")
-os.chdir("num_traj")
+os.chdir("single_traj")
 # os.chdir("one_hidden_layer")
-neuron_parameters = [35,45,55]
-num_trajectory_list = [1,3,7]
+neuron_parameters = [35,45,55,65]
+num_trajectory_list = [1]
 min_reward = 0
 for neuron in neuron_parameters:
     for num_trajectory in num_trajectory_list:

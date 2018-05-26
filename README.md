@@ -14,6 +14,4 @@ Finally, I decided to use the network with the smallest average_runs as a starti
 * So SGD was prone to blow up, which was why Adam was better
 
 ## Lunar Lander
-* discovered what it means to write in a functional style
-* why I didn't grasp it when using numpy(complexity is about the same with numbers)
-* but in practice, top down programming first, functional to refactor
+* realized that shallow networks are better, at least for policy gradients, because deeper networks tend to get stuck in local mins.

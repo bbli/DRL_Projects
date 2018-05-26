@@ -185,7 +185,6 @@ def getSamples(net,env,num_trajectory):
         state = env.reset()
         rewards_list =[]
         states_list = []
-        nodes_list = []
         done = False
         while not done:
             states_list.append(state)
@@ -195,14 +194,56 @@ def getSamples(net,env,num_trajectory):
             state,reward,done,info = env.step(action)
 
             rewards_list.append(reward) 
-            nodes_list.append(probs[action])
+            traj_nodes_list.append(probs[action])
+
+        rewards_list = np.array(rewards_list)
+        rewards_list = np.expand_dims(rewards_list,axis=1)
+        states_list = np.array(states_list)
 
         traj_s_a_list.append((states_list,rewards_list))
-        traj_nodes_list.append(rewards_list)
     return traj_s_a_list,traj_nodes_list
 
-def fitValueFunction(traj_s_a_list,value_net):
-    for states_list,rewards_list in traj_s_a_list:
-        ## Make sure it adds elementwise
-        targets_list = listFormat(rewards_list) + getTargets(states_list,value_net)
-        ## Hmm, so should I batch or on the go?
+def createNextStateValue(next_states_list,value_net):
+    state = numpyFormat(next_states_list).float()
+    output_value = value_net(state).data.numpy()
+    length, width = output_value.shape    
+    next_state_value = np.zeros((length+1,width))
+    next_state_value[:-1] = output_value
+    return next_state_value
+
+def createStatesAndTargets(traj_s_a_list,value_net):
+    '''
+    Returns the states across all trajectories and their corresponding 
+    target = r+value_net(next_state)
+    '''
+    for i,(states_list,rewards_list) in enumerate(traj_s_a_list):
+        next_states_list = states_list[1:]
+        next_state_value = createNextStateValue(next_states_list,value_net)
+
+        targets = rewards_list + next_state_value
+        if i == 0:
+            total_states_list = states_list
+            total_targets_list = targets
+        else:
+            total_states_list = np.concatenate((total_states_list,states_list),axis=0)
+            total_targets_list = np.concatenate((total_targets_list,targets),axis=0)
+    return total_states_list, total_targets_list
+
+def getBootstrappedAdvantageLogLoss(traj_nodes_list,advantage):
+    for i,(node,advantage) in enumerate(zip(traj_nodes_list,advantage)):
+        advantage = numpyFormat(advantage).float()
+        if i == 0:
+            total_loss = torch.log(node)*advantage
+        else:
+            total_loss += torch.log(node)*advantage
+    total_loss = torch.mul(total_loss,-1)
+    return total_loss
+
+
+def createAdvantage(traj_s_a_list,critic_net):
+
+    advantage_states , advantage_targets = createStatesAndTargets(traj_s_a_list,critic_net)
+    advantage_states = numpyFormat(advantage_states).float()
+    advantage = advantage_targets-critic_net.forward(advantage_states).data.numpy()
+    return advantage
+
