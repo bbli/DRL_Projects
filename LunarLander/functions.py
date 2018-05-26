@@ -231,8 +231,8 @@ def createStatesAndTargets(traj_s_a_list,value_net):
 
     return total_states_list, total_targets_list
 
-def getBootstrappedAdvantageLogLoss(traj_nodes_list,advantage):
-    for i,(node,advantage) in enumerate(zip(traj_nodes_list,advantage)):
+def getBootstrappedAdvantageLogLoss(traj_nodes_list,advantage_list):
+    for i,(node,advantage) in enumerate(zip(traj_nodes_list,advantage_list)):
         advantage = numpyFormat(advantage).float()
         if i == 0:
             total_loss = torch.log(node)*advantage

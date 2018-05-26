@@ -29,17 +29,20 @@ class CriticNet(nn.Module):
         x = self.final(x)
         return x
 
-class Critic():
+class CriticClass():
     def __init__(self,neurons):
         self.CriticNet = CriticNet(neurons)
         self.criterion = nn.MSELoss()
-        self.optimizer = optim.Adam(self.CriticNet.parameters(),lr = 5e-3)
-    def fit(self,states,targets):
+        self.optimizer = optim.Adam(self.CriticNet.parameters(),lr = 1e-3)
+        self.count = 0
+    def fit(self,states,targets,w):
+        self.count += 1
         targets = numpyFormat(targets).float()
         states = numpyFormat(states).float()
         pred = self.CriticNet.forward(states)
 
         loss = self.criterion(pred,targets)
+        w.add_scalar("Critic Loss",loss.data[0],self.count)
 
         updateNetwork(self.optimizer,loss) 
 
@@ -47,8 +50,8 @@ class Critic():
 class Experiment(EnvironmentClass):
     def __init__(self,string):
         self.environment = string
-        self.current_actor_net = None
-        self.current_critic = None
+        self.current_model = None
+        
         self.runs_test_rewards_list = []
         self.runs_models_list = []
     def episodeLogger(self,episode):
@@ -59,17 +62,16 @@ class Experiment(EnvironmentClass):
         ################ **Defining Model and Environment** ##################
         env = gym.make(self.environment)
         actor_net = ActorNet(actor_neurons)
-        critic = Critic(critic_neurons)
+        Critic = CriticClass(critic_neurons)
         ## adding a pointer to the net
-        self.current_actor_net = actor_net
-        self.current_critic = critic
+        self.current_model = actor_net
         ################ **Experiment Hyperparameters** ##################
         num_episodes = 1000
         ## figured this out experimentally
         baseline = -240
         num_trajectory = 5
         epsilon = 1e-8
-        lr_1 = 5e-3
+        lr_1 = 2e-3
         optimizer = optim.Adam(actor_net.parameters(), lr=lr_1, eps=epsilon)
 
 
@@ -81,13 +83,17 @@ class Experiment(EnvironmentClass):
             before_weights = netMag(actor_net)
             ################# **Training** ###################
             traj_s_r_list, traj_nodes_list = getSamples(actor_net,env,num_trajectory)
-            states, targets = createStatesAndTargets(traj_s_r_list,critic.CriticNet)
-            critic.fit(states,targets)
-            advantage = createAdvantage(traj_s_r_list,critic.CriticNet)
-            total_loss = getBootstrappedAdvantageLogLoss(traj_nodes_list,advantage)
+            states, targets = createStatesAndTargets(traj_s_r_list,Critic.CriticNet)
+            Critic.fit(states,targets,w)
+
+            advantage_list = createAdvantage(traj_s_r_list,Critic.CriticNet)
+            total_loss = getBootstrappedAdvantageLogLoss(traj_nodes_list,advantage_list)
             total_loss = torch.mul(total_loss,1/num_trajectory)
+
             updateNetwork(optimizer,total_loss)
             ################# **Logging** ###################
+            ipdb.set_trace()
+            w.add_scalar("Advantage",advantage,episode)
             w.add_scalar('Loss', total_loss.data[0],episode)
 
             mean_reward = getMeanReward(traj_s_r_list)
@@ -98,7 +104,7 @@ class Experiment(EnvironmentClass):
 
             after_weights = netMag(actor_net)
             w.add_scalar('Weight Change', abs(before_weights-after_weights),episode)
-        return net
+        return actor_net
 
 Lunar = Experiment('LunarLander-v2')
 # os.chdir("debug")

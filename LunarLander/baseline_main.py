@@ -38,7 +38,7 @@ class Experiment(EnvironmentClass):
         ## adding a pointer to the net
         self.current_model = net
         ################ **Experiment Hyperparameters** ##################
-        num_episodes = 4000
+        num_episodes = 1200
         ## figured this out experimentally
         baseline = -240
         # num_trajectory = 10
@@ -72,10 +72,11 @@ class Experiment(EnvironmentClass):
 
 Lunar = Experiment('LunarLander-v2')
 # os.chdir("debug")
-os.chdir("single_traj")
+# os.chdir("single_traj")
+os.chdir("num_traj")
 # os.chdir("one_hidden_layer")
-neuron_parameters = [35,45,55,65]
-num_trajectory_list = [1]
+neuron_parameters = [35,45,55]
+num_trajectory_list = [6,8]
 min_reward = 0
 for neuron in neuron_parameters:
     for num_trajectory in num_trajectory_list:
@@ -83,7 +84,7 @@ for neuron in neuron_parameters:
         model = Lunar.trainModel(neuron,num_trajectory,w)
         average_reward,std = Lunar.averageModelRuns(model,w)
         w.close()
-        print("Hidden Units: {}".format(neuron))
+        print("Hidden Units: {} Num_Traj: {}".format(neuron,num_trajectory))
         print("Mean rewards: {}, Standard Deviation: {}".format(average_reward,std))
         if average_reward<min_reward:
             best_model = model
