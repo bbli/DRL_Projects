@@ -13,6 +13,7 @@ class EnvironmentClass():
         env = gym.make(self.environment)
         state = env.reset()
         count =0
+        total_reward = 0
         while True:
             count += 1
             env.render()
@@ -21,9 +22,10 @@ class EnvironmentClass():
                 env.close()
                 break
             state,reward,done,info = env.step(action)
+            total_reward += reward
             if done == True:
                 print("Number of steps: ",count)
-                print("Reward: ",reward)
+                print("Reward: ",total_reward)
                 print("Click any key to close the environment")
                 getch.getch()
                 env.close()

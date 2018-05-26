@@ -1,5 +1,5 @@
 from tensorboardX import SummaryWriter
-from torch.optim.lr_scheduler import LambdaLR
+# from torch.optim.lr_scheduler import LambdaLR
 import ipdb
 import os
 
@@ -9,11 +9,11 @@ class Net(nn.Module):
     def __init__(self,neurons):
         super(Net, self).__init__()
         self.fc1 = nn.Linear(8,neurons)
-        self.fc2 = nn.Linear(neurons,neurons)
+        # self.fc2 = nn.Linear(neurons,neurons)
         self.final = nn.Linear(neurons,4)
     def forward(self, x):
         x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
+        # x = F.relu(self.fc2(x))
         x = self.final(x)
         if len(x.shape)==1:
             return F.softmax(x,dim=0)
@@ -26,11 +26,12 @@ class Experiment(EnvironmentClass):
         self.current_model = None
         self.optimizer = None
         self.runs_test_rewards_list = []
+        self.runs_models_list = []
     def episodeLogger(self,episode):
         self.episode = episode
 
     @timeit
-    def trainModel(self,neurons,w):
+    def trainModel(self,neurons,num_trajectory,w):
         ################ **Defining Model and Environment** ##################
         env = gym.make(self.environment)
         net = Net(neurons)
@@ -40,7 +41,7 @@ class Experiment(EnvironmentClass):
         num_episodes = 1000
         ## figured this out experimentally
         baseline = -240
-        num_trajectory = 10
+        # num_trajectory = 10
         lr_1 = 3e-3
         epsilon = 1e-8
         optimizer = optim.Adam(net.parameters(), lr=lr_1,eps= epsilon)
@@ -49,7 +50,7 @@ class Experiment(EnvironmentClass):
         # scheduler = LambdaLR(optimizer,lr_lambda=cosine(210))
 
 
-        w.add_text("Experiment Parameters","Hidden Units(2 Layers): {} Number of episodes: {} Trajectory Size: {} Adam Learning Rate 1: {} ".format(neurons,num_episodes,num_trajectory,lr_1))
+        w.add_text("Experiment Parameters","Hidden Units: {} Number of episodes: {} Trajectory Size: {} Adam Learning Rate 1: {} ".format(neurons,num_episodes,num_trajectory,lr_1))
         ################################################################
         count = 0
         for episode in range(num_episodes):
@@ -72,15 +73,19 @@ class Experiment(EnvironmentClass):
 Lunar = Experiment('LunarLander-v2')
 # os.chdir("single_run")
 # os.chdir("debug")
-neuron_parameters = [10,15,20,25]
+os.chdir("num_traj")
+# os.chdir("one_hidden_layer")
+neuron_parameters = [35,45,55]
+num_trajectory_list = [1,3,7]
 min_reward = 0
 for neuron in neuron_parameters:
-    w = SummaryWriter()
-    model = Lunar.trainModel(neuron,w)
-    average_reward,std = Lunar.averageModelRuns(model,w)
-    w.close()
-    print("Hidden Units: {}".format(neuron))
-    print("Mean rewards: {}, Standard Deviation: {}".format(average_reward,std))
-    if average_reward<min_reward:
-        best_model = model
-        min_reward = average_reward
+    for num_trajectory in num_trajectory_list:
+        w = SummaryWriter()
+        model = Lunar.trainModel(neuron,num_trajectory,w)
+        average_reward,std = Lunar.averageModelRuns(model,w)
+        w.close()
+        print("Hidden Units: {}".format(neuron))
+        print("Mean rewards: {}, Standard Deviation: {}".format(average_reward,std))
+        if average_reward<min_reward:
+            best_model = model
+            min_reward = average_reward
