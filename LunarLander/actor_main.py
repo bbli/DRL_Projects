@@ -33,7 +33,7 @@ class CriticClass():
     def __init__(self,neurons):
         self.CriticNet = CriticNet(neurons)
         self.criterion = nn.MSELoss()
-        self.optimizer = optim.Adam(self.CriticNet.parameters(),lr = 1e-3)
+        self.optimizer = optim.Adam(self.CriticNet.parameters(),lr = 5e-4)
         self.count = 0
     def fit(self,states,targets,w):
         self.count += 1
@@ -66,10 +66,10 @@ class Experiment(EnvironmentClass):
         ## adding a pointer to the net
         self.current_model = actor_net
         ################ **Experiment Hyperparameters** ##################
-        num_episodes = 1000
+        num_episodes = 1200
         ## figured this out experimentally
         baseline = -240
-        num_trajectory = 5
+        num_trajectory = 8
         epsilon = 1e-8
         lr_1 = 2e-3
         optimizer = optim.Adam(actor_net.parameters(), lr=lr_1, eps=epsilon)
@@ -92,8 +92,7 @@ class Experiment(EnvironmentClass):
 
             updateNetwork(optimizer,total_loss)
             ################# **Logging** ###################
-            ipdb.set_trace()
-            w.add_scalar("Advantage",advantage,episode)
+            w.add_scalar("Advantage",advantage_list.mean(),episode)
             w.add_scalar('Loss', total_loss.data[0],episode)
 
             mean_reward = getMeanReward(traj_s_r_list)
@@ -111,6 +110,6 @@ Lunar = Experiment('LunarLander-v2')
 os.chdir("trainModel_runs")
 w = SummaryWriter()
 model = Lunar.trainModel(36,20,w)
-averageModelRuns,std = Lunar.averageModelRuns(model,w)
+average_reward,std = Lunar.averageModelRuns(model,w)
 w.close()
 print("Mean rewards: {}, Standard Deviation: {}".format(average_reward,std))
