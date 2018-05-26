@@ -47,9 +47,8 @@ class Critic():
 class Experiment(EnvironmentClass):
     def __init__(self,string):
         self.environment = string
-        self.current_actor = None
+        self.current_actor_net = None
         self.current_critic = None
-        self.optimizer = None
         self.runs_test_rewards_list = []
         self.runs_models_list = []
     def episodeLogger(self,episode):
@@ -69,29 +68,43 @@ class Experiment(EnvironmentClass):
         ## figured this out experimentally
         baseline = -240
         num_trajectory = 5
-        lr_1 = 0.01
-        optimizer = optim.Adam(actor_net.parameters(), lr=lr_1)
+        epsilon = 1e-8
+        lr_1 = 5e-3
+        optimizer = optim.Adam(actor_net.parameters(), lr=lr_1, eps=epsilon)
 
 
         w.add_text("Experiment Parameters","ActorNet Hidden Units: {} CriticNet Hidden Units: {} Number of episodes: {} Trajectory Size: {} Adam Learning Rate 1: {} ".format(actor_neurons,critic_neurons,num_episodes,num_trajectory,lr_1))
         ################################################################ count = 0
         for episode in range(num_episodes):
+            self.episodeLogger(episode)
+            episodePrinter(episode,400)
             before_weights = netMag(actor_net)
             ################# **Training** ###################
-            traj_s_a_list, traj_nodes_list = getSamples(actor_net,env,num_trajectory)
-            states, targets = createStatesAndTargets(traj_s_a_list,critic.CriticNet)
+            traj_s_r_list, traj_nodes_list = getSamples(actor_net,env,num_trajectory)
+            states, targets = createStatesAndTargets(traj_s_r_list,critic.CriticNet)
             critic.fit(states,targets)
-            advantage = createAdvantage(traj_s_a_list,critic.CriticNet)
+            advantage = createAdvantage(traj_s_r_list,critic.CriticNet)
             total_loss = getBootstrappedAdvantageLogLoss(traj_nodes_list,advantage)
+            total_loss = torch.mul(total_loss,1/num_trajectory)
             updateNetwork(optimizer,total_loss)
-            ################################################################
+            ################# **Logging** ###################
+            w.add_scalar('Loss', total_loss.data[0],episode)
+
+            mean_reward = getMeanReward(traj_s_r_list)
+            w.add_scalar('Mean Reward',mean_reward,episode)
+
+            avg_lr = averageAdamLearningRate(optimizer,epsilon,lr_1)
+            w.add_scalar('Learning Rate',avg_lr,episode)
+
             after_weights = netMag(actor_net)
-            w.add_scalar('Weight Change', abs(before_weights-after_weights),count)
-            logAdamLearningRate(optimizer,w)
+            w.add_scalar('Weight Change', abs(before_weights-after_weights),episode)
         return net
 
 Lunar = Experiment('LunarLander-v2')
-os.chdir("debug")
+# os.chdir("debug")
+os.chdir("trainModel_runs")
 w = SummaryWriter()
-Lunar.trainModel(36,20,w)
+model = Lunar.trainModel(36,20,w)
+averageModelRuns,std = Lunar.averageModelRuns(model,w)
 w.close()
+print("Mean rewards: {}, Standard Deviation: {}".format(average_reward,std))
