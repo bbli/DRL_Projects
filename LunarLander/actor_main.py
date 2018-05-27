@@ -2,15 +2,16 @@ import ipdb
 import os
 from tensorboardX import SummaryWriter
 from Environment import *
+
 class ActorNet(nn.Module):
     def __init__(self,neurons):
         super().__init__()
         self.fc1 = nn.Linear(8,neurons)
-        # self.fc2 = nn.Linear(neurons,neurons)
+        self.fc2 = nn.Linear(neurons,neurons)
         self.final = nn.Linear(neurons,4)
     def forward(self,x):
         x = F.relu(self.fc1(x)) 
-        # x = F.relu(self.fc2(x))
+        x = F.relu(self.fc2(x))
         x = self.final(x)
         if len(x.shape)==1:
             return F.softmax(x,dim=0)
@@ -21,11 +22,11 @@ class CriticNet(nn.Module):
     def __init__(self,neurons):
         super().__init__()
         self.fc1 = nn.Linear(8,neurons)
-        # self.fc2 = nn.Linear(neurons,neurons)
+        self.fc2 = nn.Linear(neurons,neurons)
         self.final = nn.Linear(neurons,1)
     def forward(self,x):
         x = F.relu(self.fc1(x)) 
-        # x = F.relu(self.fc2(x))
+        x = F.relu(self.fc2(x))
         x = self.final(x)
         return x
 
