@@ -15,3 +15,6 @@ Finally, I decided to use the network with the smallest average_runs as a starti
 
 ## Lunar Lander
 * realized that shallow networks are better, at least for policy gradients, because deeper networks tend to get stuck in local mins.
+* I think that until I can get the advantage to be positive, I will never get a good solution
+
+* realized that target networks give you the best of both worlds: getting out of local min of high learning rates, and slow and steady upward progress of small learning rate
