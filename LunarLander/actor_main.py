@@ -7,11 +7,11 @@ class ActorNet(nn.Module):
     def __init__(self,neurons):
         super().__init__()
         self.fc1 = nn.Linear(8,neurons)
-        self.fc2 = nn.Linear(neurons,neurons)
+        # self.fc2 = nn.Linear(neurons,neurons)
         self.final = nn.Linear(neurons,4)
     def forward(self,x):
         x = F.relu(self.fc1(x)) 
-        x = F.relu(self.fc2(x))
+        # x = F.relu(self.fc2(x))
         x = self.final(x)
         if len(x.shape)==1:
             return F.softmax(x,dim=0)
@@ -111,9 +111,9 @@ class Experiment(EnvironmentClass):
         return actor_net
 
 Lunar = Experiment('LunarLander-v2')
-os.chdir("debug")
+# os.chdir("debug")
 # os.chdir("trainModel_runs")
-actor_neuron_parameters = [10,15,20]
+actor_neuron_parameters = [25,35,45]
 actor_learning_rate_parameters = [1e-2,1e-3,5e-4,1e-4]
 min_reward = -100
 for actor_neuron in actor_neuron_parameters:
