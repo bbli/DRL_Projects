@@ -213,8 +213,8 @@ def createNextStateValue(next_states_list,value_net):
 
 def createStatesAndTargets(traj_s_a_list,value_net):
     '''
-    Returns the states across all trajectories and their corresponding 
-    target = r+value_net(next_state)
+    Returns: states across all trajectories 
+             target = r+value_net(next_state)
     '''
     for i,(states_list,rewards_list) in enumerate(traj_s_a_list):
         next_states_list = states_list[1:]
@@ -249,10 +249,25 @@ def createAdvantage(traj_s_a_list,critic_net):
     advantage = advantage_targets-critic_net.forward(advantage_states).data.numpy()
     return advantage
 
-def getMeanReward(traj_s_r_list):
+def getMeanTotalReward(traj_s_r_list):
     total_reward = 0 
     for states_list,rewards_list in traj_s_r_list:
         traj_reward = rewards_list.sum()
         total_reward += traj_reward
     return total_reward/len(traj_s_r_list)
+def getMeanLastReward(traj_s_r_list):
+    total = 0
+    for states_list,rewards_list in traj_s_r_list:
+        ipdb.set_trace()
+        last_reward = rewards_list[-1]
+        total += last_reward
+    return total/len(traj_s_r_list)
 
+def getMeanLastAdvantage(traj_s_r_list,critic_net):
+    mean_advantage = 0
+    for states_list,rewards_list in traj_s_r_list:
+        last_target = rewards_list[-1]
+        last_state = numpyFormat(states_list[-1]).float()
+        last_advantage = last_target-critic_net.forward(last_state).data[0]
+        mean_advantage += last_advantage
+    return mean_advantage/len(traj_s_r_list)

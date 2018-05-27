@@ -92,11 +92,14 @@ class Experiment(EnvironmentClass):
             total_loss = torch.mul(total_loss,1/num_trajectory)
 
             updateNetwork(optimizer,total_loss)
-            w.add_scalar("Advantage",advantage_list.mean(),episode)
             ################# **Logging** ###################
+            w.add_scalar("Advantage",advantage_list.mean(),episode)
             w.add_scalar('Loss', total_loss.data[0],episode)
 
-            mean_reward = getMeanReward(traj_s_r_list)
+            mean_last_advantage = getMeanLastAdvantage(traj_s_r_list,Critic.CriticNet)
+            w.add_scalar('Advantage Last',mean_last_advantage,episode)
+
+            mean_reward = getMeanTotalReward(traj_s_r_list)
             w.add_scalar('Mean Reward',mean_reward,episode)
 
             avg_lr = averageAdamLearningRate(optimizer,epsilon,lr_1)
