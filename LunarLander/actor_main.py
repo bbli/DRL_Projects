@@ -34,7 +34,7 @@ class CriticClass():
     def __init__(self,neurons):
         self.CriticNet = CriticNet(neurons)
         self.criterion = nn.MSELoss()
-        self.optimizer = optim.Adam(self.CriticNet.parameters(),lr = 5e-4)
+        self.optimizer = optim.Adam(self.CriticNet.parameters(),lr = 1e-2)
         self.count = 0
     def fit(self,states,targets,w):
         self.count += 1
@@ -67,12 +67,12 @@ class Experiment(EnvironmentClass):
         ## adding a pointer to the net
         self.current_model = actor_net
         ################ **Experiment Hyperparameters** ##################
-        num_episodes = 1200
+        num_episodes = 1000
         ## figured this out experimentally
         baseline = -240
         num_trajectory = 8
         epsilon = 1e-8
-        lr_1 = 2e-3
+        lr_1 = 5e-4
         optimizer = optim.Adam(actor_net.parameters(), lr=lr_1, eps=epsilon)
 
 
@@ -92,8 +92,8 @@ class Experiment(EnvironmentClass):
             total_loss = torch.mul(total_loss,1/num_trajectory)
 
             updateNetwork(optimizer,total_loss)
-            ################# **Logging** ###################
             w.add_scalar("Advantage",advantage_list.mean(),episode)
+            ################# **Logging** ###################
             w.add_scalar('Loss', total_loss.data[0],episode)
 
             mean_reward = getMeanReward(traj_s_r_list)
@@ -108,9 +108,18 @@ class Experiment(EnvironmentClass):
 
 Lunar = Experiment('LunarLander-v2')
 # os.chdir("debug")
-os.chdir("trainModel_runs")
-w = SummaryWriter()
-model = Lunar.trainModel(36,20,w)
-average_reward,std = Lunar.averageModelRuns(model,w)
-w.close()
-print("Mean rewards: {}, Standard Deviation: {}".format(average_reward,std))
+# os.chdir("trainModel_runs")
+actor_neuron_parameters = [20,30,40]
+critic_neuron_parameters = [6,12,18]
+min_reward = -100
+for actor_neuron in actor_neuron_parameters:
+    for critic_neuron in critic_neuron_parameters:
+        w = SummaryWriter()
+        model = Lunar.trainModel(actor_neuron,critic_neuron,w)
+        average_reward,std = Lunar.averageModelRuns(model,w)
+        w.close()
+        print("Actor Hidden Units: {} Critic Hidden Units: {}".format(actor_neuron,critic_neuron))
+        print("Mean rewards: {}, Standard Deviation: {}".format(average_reward,std))
+        if average_reward > min_reward:
+            best_model = model
+            min_reward = average_reward
