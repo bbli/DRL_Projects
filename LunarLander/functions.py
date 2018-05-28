@@ -166,6 +166,7 @@ def getTotalLoss(net,env,count,baseline,episode,num_trajectory,w=None):
         if w:
             w.add_scalar('Reward',reward,local_count)
             w.add_scalar('Baseline',baseline,local_count)
+            w.add_scalar('Advantage',reward-baseline,local_count)
         ##############################################################
     ## Averaging to create loss estimator
     if total_loss.data[0] == 0:

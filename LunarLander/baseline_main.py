@@ -55,7 +55,7 @@ class Experiment(EnvironmentClass):
         count = 0
         for episode in range(num_episodes):
             self.episodeLogger(episode)
-            # episodePrinter(episode,400)
+            episodePrinter(episode,400)
             
             before_weights = netMag(net)
             ################# **Training** ###################
@@ -72,10 +72,8 @@ class Experiment(EnvironmentClass):
 
 Lunar = Experiment('LunarLander-v2')
 # os.chdir("debug")
-# os.chdir("single_traj")
-os.chdir("num_traj")
-# os.chdir("one_hidden_layer")
-neuron_parameters = [35,45,55]
+os.chdir("base_baseline")
+neuron_parameters = [35,45]
 num_trajectory_list = [6,8]
 min_reward = 0
 for neuron in neuron_parameters:
