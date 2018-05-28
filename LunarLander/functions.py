@@ -198,7 +198,7 @@ def getSamples(net,env,num_trajectory):
 
         rewards_list = np.array(rewards_list)
         rewards_list = np.expand_dims(rewards_list,axis=1)
-        # rewards_list = rewards_list/5
+        rewards_list = rewards_list/10
 
         states_list = np.array(states_list)
 
@@ -213,12 +213,12 @@ def createNextStateValue(next_states_list,value_net):
     next_state_value[:-1] = output_value
     return next_state_value
 
-def createStatesAndTargets(traj_s_a_list,value_net):
+def createStatesAndTargets(traj_s_r_list,value_net):
     '''
     Returns: states across all trajectories 
              target = r+value_net(next_state)
     '''
-    for i,(states_list,rewards_list) in enumerate(traj_s_a_list):
+    for i,(states_list,rewards_list) in enumerate(traj_s_r_list):
         next_states_list = states_list[1:]
         next_state_value = createNextStateValue(next_states_list,value_net)
 
@@ -229,9 +229,25 @@ def createStatesAndTargets(traj_s_a_list,value_net):
         else:
             total_states_list = np.concatenate((total_states_list,states_list),axis=0)
             total_targets_list = np.concatenate((total_targets_list,targets),axis=0)
-
-
     return total_states_list, total_targets_list
+
+def createStatesAndMCTargets(traj_s_r_list):
+    for i,(states_list,rewards_list) in enumerate(traj_s_r_list):
+        targets = createMCTarget(rewards_list)
+        if i == 0:
+            total_states_list = states_list
+            total_targets_list = targets
+        else:
+            total_states_list = np.concatenate((total_states_list,states_list),axis=0)
+            total_targets_list = np.concatenate((total_targets_list,targets),axis=0)
+    return total_states_list, total_targets_list
+
+def createMCTarget(rewards_list):
+    targets = np.zeros(rewards_list.shape)
+    for i in range(len(rewards_list)):
+        targets[i] = rewards_list[i:].sum()
+    return targets
+
 
 def getBootstrappedAdvantageLogLoss(traj_nodes_list,advantage_list):
     for i,(node,advantage) in enumerate(zip(traj_nodes_list,advantage_list)):
@@ -244,9 +260,9 @@ def getBootstrappedAdvantageLogLoss(traj_nodes_list,advantage_list):
     return total_loss
 
 
-def createAdvantage(traj_s_a_list,critic_net):
+def createAdvantage(traj_s_r_list,critic_net):
 
-    advantage_states , advantage_targets = createStatesAndTargets(traj_s_a_list,critic_net)
+    advantage_states , advantage_targets = createStatesAndTargets(traj_s_r_list,critic_net)
     advantage_states = numpyFormat(advantage_states).float()
     advantage = advantage_targets-critic_net.forward(advantage_states).data.numpy()
     return advantage

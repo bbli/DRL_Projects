@@ -84,7 +84,8 @@ class Experiment(EnvironmentClass):
             before_weights = netMag(actor_net)
             ################# **Training** ###################
             traj_s_r_list, traj_nodes_list = getSamples(actor_net,env,num_trajectory)
-            states, targets = createStatesAndTargets(traj_s_r_list,Critic.CriticNet)
+            # states1, targets1 = createStatesAndTargets(traj_s_r_list,Critic.CriticNet)
+            states,targets = createStatesAndMCTargets(traj_s_r_list)
             Critic.fit(states,targets,w)
 
             advantage_list = createAdvantage(traj_s_r_list,Critic.CriticNet)
@@ -121,7 +122,7 @@ for actor_neuron in actor_neuron_parameters:
         model = Lunar.trainModel(actor_neuron,critic_neuron,w)
         average_reward,std = Lunar.averageModelRuns(model,w)
         w.close()
-        print("Actor Hidden Units: {} Critic Hidden Units: {}".format(actor_neuron,learn_rate))
+        print("Actor Hidden Units: {} Critic Hidden Units: {}".format(actor_neuron,critic_neuron))
         print("Mean rewards: {}, Standard Deviation: {}".format(average_reward,std))
         if average_reward > min_reward:
             best_model = model
