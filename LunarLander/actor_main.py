@@ -34,7 +34,7 @@ class CriticClass():
     def __init__(self,neurons):
         self.CriticNet = CriticNet(neurons)
         self.criterion = nn.MSELoss()
-        self.optimizer = optim.Adam(self.CriticNet.parameters(),lr = 5e-3)
+        self.optimizer = optim.Adam(self.CriticNet.parameters(),lr = 6e-3)
         self.count = 0
     def fit(self,states,targets,w):
         self.count += 1
@@ -59,11 +59,10 @@ class Experiment(EnvironmentClass):
         self.episode = episode
 
     @timeit
-    def trainModel(self,actor_neurons,actor_learning_rate,w):
+    def trainModel(self,actor_neurons,critic_neurons,w):
         ################ **Defining Model and Environment** ##################
         env = gym.make(self.environment)
         actor_net = ActorNet(actor_neurons)
-        critic_neurons = 6
         Critic = CriticClass(critic_neurons)
         ## adding a pointer to the net
         self.current_model = actor_net
@@ -73,7 +72,7 @@ class Experiment(EnvironmentClass):
         baseline = -240
         num_trajectory = 8
         epsilon = 1e-8
-        lr_1 = actor_learning_rate
+        lr_1 = 4e-3
         optimizer = optim.Adam(actor_net.parameters(), lr=lr_1, eps=epsilon)
 
 
@@ -114,15 +113,15 @@ Lunar = Experiment('LunarLander-v2')
 # os.chdir("debug")
 # os.chdir("trainModel_runs")
 actor_neuron_parameters = [25,35,45]
-actor_learning_rate_parameters = [1e-2,1e-3,5e-4,1e-4]
+critic_neuron_parameters = [4,5,6]
 min_reward = -100
 for actor_neuron in actor_neuron_parameters:
-    for learn_rate in actor_learning_rate_parameters:
+    for critic_neuron in critic_neuron_parameters:
         w = SummaryWriter()
-        model = Lunar.trainModel(actor_neuron,learn_rate,w)
+        model = Lunar.trainModel(actor_neuron,critic_neuron,w)
         average_reward,std = Lunar.averageModelRuns(model,w)
         w.close()
-        print("Actor Hidden Units: {} Actor Learning Rate: {}".format(actor_neuron,learn_rate))
+        print("Actor Hidden Units: {} Critic Hidden Units: {}".format(actor_neuron,learn_rate))
         print("Mean rewards: {}, Standard Deviation: {}".format(average_reward,std))
         if average_reward > min_reward:
             best_model = model

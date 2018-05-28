@@ -198,7 +198,7 @@ def getSamples(net,env,num_trajectory):
 
         rewards_list = np.array(rewards_list)
         rewards_list = np.expand_dims(rewards_list,axis=1)
-        rewards_list = rewards_list/10
+        # rewards_list = rewards_list/5
 
         states_list = np.array(states_list)
 
