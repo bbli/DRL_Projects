@@ -6,26 +6,33 @@ from Environment import *
 class ActorNet(nn.Module):
     def __init__(self,neurons):
         super().__init__()
-        self.fc1 = nn.Linear(8,neurons)
+        self.fc1 = nn.Linear(3,neurons)
         # self.fc2 = nn.Linear(neurons,neurons)
-        self.final = nn.Linear(neurons,4)
+        self.final = nn.Linear(neurons,1)
     def forward(self,x):
         x = F.relu(self.fc1(x)) 
         # x = F.relu(self.fc2(x))
         x = self.final(x)
-        if len(x.shape)==1:
-            return F.softmax(x,dim=0)
-        else:
-            return F.softmax(x,dim=1)
+        return 2*F.tanh(x)
 
 class CriticNet(nn.Module):
     def __init__(self,neurons):
         super().__init__()
-        self.fc1 = nn.Linear(8,neurons)
-        self.fc2 = nn.Linear(neurons,neurons)
+        self.state_dim = 3
+        self.action_dim =1
+        self.fc1 = nn.Linear(self.state_dim,neurons)
+        self.fc2 = nn.Linear(neurons+self.action_dim,neurons)
         self.final = nn.Linear(neurons,1)
-    def forward(self,x):
-        x = F.relu(self.fc1(x)) 
+    def forward(self,state,action):
+        '''
+        Assumes state and action are pytorch variables
+        '''
+        x = F.relu(self.fc1(state)) 
+        shape = state.shape
+        if len(shape)>1:
+            x = torch.cat((x,action),1)
+        else:
+            x = torch.cat((x,action),0)
         x = F.relu(self.fc2(x))
         x = self.final(x)
         return x
@@ -58,60 +65,72 @@ class Experiment(EnvironmentClass):
     def episodeLogger(self,episode):
         self.episode = episode
 
-    @timeit
+    # @timeit
     def trainModel(self,actor_neurons,critic_neurons,w):
         ################ **Defining Model and Environment** ##################
         env = gym.make(self.environment)
         actor_net = ActorNet(actor_neurons)
         Critic = CriticClass(critic_neurons)
-        ## adding a pointer to the net
-        self.current_model = actor_net
+
+        target_actor_net = ActorNet(actor_neurons)
+        target_actor_net.load_state_dict(actor_net.state_dict())
+        target_critic_net = CriticNet(critic_neurons)
+        target_critic_net.load_state_dict(Critic.CriticNet.state_dict())
+
+
+        ## adding pointer
+        self.current_actor_net = actor_net
+        self.current_critic = Critic
         ################ **Experiment Hyperparameters** ##################
         num_episodes = 1000
-        ## figured this out experimentally
-        baseline = -240
-        num_trajectory = 8
+        max_steps = 500
+        memory_threshold=1000
+        memory_buffer = []
+        gamma = 0.9
         epsilon = 1e-8
         lr_1 = 4e-3
         optimizer = optim.Adam(actor_net.parameters(), lr=lr_1, eps=epsilon)
 
 
-        w.add_text("Experiment Parameters","ActorNet Hidden Units: {} CriticNet Hidden Units: {} Number of episodes: {} Trajectory Size: {} Adam Learning Rate 1: {} ".format(actor_neurons,critic_neurons,num_episodes,num_trajectory,lr_1))
+        w.add_text("Experiment Parameters","ActorNet Hidden Units: {} CriticNet Hidden Units: {} Number of episodes: {} Adam Learning Rate 1: {} ".format(actor_neurons,critic_neurons,num_episodes,lr_1))
         ################################################################ count = 0
         for episode in range(num_episodes):
             self.episodeLogger(episode)
             episodePrinter(episode,400)
             before_weights = netMag(actor_net)
             ################# **Training** ###################
-            traj_s_r_list, traj_nodes_list = getSamples(actor_net,env,num_trajectory)
-            # states1, targets1 = createStatesAndTargets(traj_s_r_list,Critic.CriticNet)
-            states,targets = createStatesAndMCTargets(traj_s_r_list)
-            Critic.fit(states,targets,w)
+            state = env.reset()
+            for steps in range(max_steps):
+                action = getContinuousAction(actor_net,state)
+                new_state, reward, done, info = env.step(action)
+                memory_buffer.append((state,action,reward,new_state))
+                if len(memory_buffer)<memory_threshold:
+                    pass
+                else:
+                    memory_buffer.pop(0)
+                    applyDDPG(memory_buffer,actor_net)
+                state = new_state
 
-            advantage_list = createAdvantage(traj_s_r_list,Critic.CriticNet)
-            total_loss = getBootstrappedAdvantageLogLoss(traj_nodes_list,advantage_list)
-            total_loss = torch.mul(total_loss,1/num_trajectory)
 
-            updateNetwork(optimizer,total_loss)
             ################# **Logging** ###################
-            w.add_scalar("Advantage",advantage_list.mean(),episode)
-            w.add_scalar('Loss', total_loss.data[0],episode)
+            # w.add_scalar("Advantage",advantage_list.mean(),episode)
+            # w.add_scalar('Loss', total_loss.data[0],episode)
 
-            mean_last_advantage = getMeanLastAdvantage(traj_s_r_list,Critic.CriticNet)
-            w.add_scalar('Advantage Last',mean_last_advantage,episode)
+            # mean_last_advantage = getMeanLastAdvantage(traj_s_r_list,Critic.CriticNet)
+            # w.add_scalar('Advantage Last',mean_last_advantage,episode)
 
-            mean_reward = getMeanTotalReward(traj_s_r_list)
-            w.add_scalar('Mean Reward',mean_reward,episode)
+            # mean_reward = getMeanTotalReward(traj_s_r_list)
+            # w.add_scalar('Mean Reward',mean_reward,episode)
 
-            avg_lr = averageAdamLearningRate(optimizer,epsilon,lr_1)
-            w.add_scalar('Learning Rate',avg_lr,episode)
+            # avg_lr = averageAdamLearningRate(optimizer,epsilon,lr_1)
+            # w.add_scalar('Learning Rate',avg_lr,episode)
 
-            after_weights = netMag(actor_net)
-            w.add_scalar('Weight Change', abs(before_weights-after_weights),episode)
+            # after_weights = netMag(actor_net)
+            # w.add_scalar('Weight Change', abs(before_weights-after_weights),episode)
         return actor_net
 
-Lunar = Experiment('LunarLander-v2')
-# os.chdir("debug")
+Lunar = Experiment('Pendulum-v0')
+os.chdir("debug")
 # os.chdir("trainModel_runs")
 actor_neuron_parameters = [25,35,45]
 critic_neuron_parameters = [4,5,6]
