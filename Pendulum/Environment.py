@@ -5,6 +5,8 @@ class EnvironmentClass():
     def __init__(self,string):
         # self.env = gym.make(string)
         self.environment = string
+        self.runs_test_rewards_list = []
+        self.runs_models_list = []
 
     def makeEnvironment(self):
         return gym.make(self.environment)
@@ -83,19 +85,19 @@ class EnvironmentClass():
             model = self.current_model
         env = gym.make(self.environment)
         num_trials = 100
-        rewards_list = []
+        trials_rewards_list = []
         for i in range(num_trials):
             state = env.reset()
             tr = self.evaluateModel(env,model)
-            rewards_list.append(tr)
+            trials_rewards_list.append(tr)
             if w:
                 w.add_scalar("Test Reward",tr,i)
-        rewards_list = np.array(rewards_list)
-        mean, std = rewards_list.mean(), rewards_list.std(ddof=1)
+        trials_rewards_list = np.array(trials_rewards_list)
+        mean, std = trials_rewards_list.mean(), trials_rewards_list.std(ddof=1)
         if w:
             w.add_text("Test Scores","Mean Reward: {} Standard Deviation: {}".format(mean,std))
 
-        self.runs_test_rewards_list.append(rewards_list)
+        self.runs_test_rewards_list.append(trials_rewards_list)
         self.runs_models_list.append(model)
         return mean,std
 

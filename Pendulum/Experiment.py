@@ -62,11 +62,10 @@ class CriticClass():
 
 class ExperimentClass(EnvironmentClass):
     def __init__(self,string):
-        self.environment = string
-        self.current_model = None
+        super().__init__(string)
+        self.current_actor_net = None
+        self.current_critic_net = None
         
-        self.runs_test_rewards_list = []
-        self.runs_models_list = []
     def episodeLogger(self,episode):
         self.episode = episode
 

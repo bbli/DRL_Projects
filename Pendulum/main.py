@@ -22,4 +22,5 @@ os.chdir("trainModel_runs")
             # min_reward = average_reward
 w = SummaryWriter()
 target_actor_model = Pendulum.trainModel(36,6,w)
+mean, std = averageModelRuns(target_actor_model,w)
 w.close()
