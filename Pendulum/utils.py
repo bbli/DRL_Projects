@@ -232,4 +232,4 @@ def getContinuousAction(net,state):
     state = numpyFormat(state).float()
     action = net(state).data.numpy()
     action = action + np.random.normal(scale=0.05)
-    return action
+    return np.clip(action,-2,2)

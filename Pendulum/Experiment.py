@@ -92,7 +92,7 @@ class ExperimentClass(EnvironmentClass):
         memory_buffer = []
         N = 100
         epsilon = 1e-8
-        lr_1 = 2e-3
+        lr_1 = 2e-2
         optimizer = optim.Adam(actor_net.parameters(), lr=lr_1, eps=epsilon)
 
 
@@ -122,7 +122,7 @@ class ExperimentClass(EnvironmentClass):
                     states,actions,rewards,new_states = getMiniBatch(memory_buffer,N)
                     ################ **Critting Fitting** ##################
 
-                    gamma = 0.9
+                    gamma = 0.95
                     new_states_actions = createActionNodes(new_states,target_actor_net).data.numpy()
                     new_states_q_values = createQValues(new_states,new_states_actions,target_critic_net)
 
