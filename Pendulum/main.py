@@ -86,8 +86,8 @@ class Experiment(EnvironmentClass):
 
 
         ## adding pointer
-        self.current_actor_net = actor_net
-        self.current_critic = Critic
+        self.current_actor_net = target_actor_net
+        self.current_critic_net = target_critic_net
         ################ **Experiment Hyperparameters** ##################
         num_episodes = 1000
         max_steps = 500
@@ -100,17 +100,23 @@ class Experiment(EnvironmentClass):
         optimizer = optim.Adam(actor_net.parameters(), lr=lr_1, eps=epsilon)
 
 
-        w.add_text("Experiment Parameters","ActorNet Hidden Units: {} CriticNet Hidden Units: {} Number of episodes: {} Adam Learning Rate 1: {} ".format(actor_neurons,critic_neurons,num_episodes,lr_1))
-        ################################################################ count = 0
+        w.add_text("Environment Parameters","Number of Episodes: {} Max Steps: {}".format(num_episodes,max_steps))
+        w.add_text("Model Parameters","ActorNet Hidden Units: {} CriticNet Hidden Units: {} Adam Learning Rate: {} Memory Size: {} Memory Batch Size: {}".format(actor_neurons,critic_neurons,lr_1,memory_threshold,N))
+        ################################################################ 
+        count = 0
         for episode in range(num_episodes):
+            ## 3
             self.episodeLogger(episode)
             episodePrinter(episode,400)
-        ################################################################
+            ################################################################
             state = env.reset()
+            total_reward = 0
             for steps in range(max_steps):
+                count +=1
                 ################# **Sampling** ###################
                 action = getContinuousAction(actor_net,state)
                 new_state, reward, done, info = env.step(action)
+                total_reward += reward
                 memory_buffer.append((state,action,reward,new_state))
                 if len(memory_buffer)<memory_threshold:
                     pass
@@ -140,26 +146,22 @@ class Experiment(EnvironmentClass):
                     updateTargetNetwork(actor_net,target_actor_net)
                     
                     ################# **Logging** ###################
+                    ## 5:once memory_buffer is large enough
                     # t_after_critic_weights = netMag(Critic.CriticNet)
                     # t_diff = t_after_critic_weights-t_before_critic_weights
 
 
-                    # w.add_scalar("Advantage",advantage_list.mean(),episode)
-                    # w.add_scalar('Loss', total_loss.data[0],episode)
-
-                    # mean_last_advantage = getMeanLastAdvantage(traj_s_r_list,Critic.CriticNet)
-                    # w.add_scalar('Advantage Last',mean_last_advantage,episode)
-
-                    # mean_reward = getMeanTotalReward(traj_s_r_list)
-                    # w.add_scalar('Mean Reward',mean_reward,episode)
+                    w.add_scalar('Loss', loss.data[0],count)
 
                     avg_lr = averageAdamLearningRate(optimizer,epsilon,lr_1)
-                    w.add_scalar('Learning Rate',avg_lr,episode)
+                    w.add_scalar('Learning Rate',avg_lr,count)
 
                     after_weights = netMag(actor_net)
-                    w.add_scalar('Weight Change', abs(before_weights-after_weights),episode)
-                    ipdb.set_trace()
+                    w.add_scalar('Weight Change', abs(before_weights-after_weights),count)
+                ## 4:inside max step for loop
                 state = new_state
+            ## 3: inside episode for loop
+            w.add_scalar('Reward',total_reward,episode)
         return target_actor_net
 
 Lunar = Experiment('Pendulum-v0')
