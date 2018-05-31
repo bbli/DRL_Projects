@@ -93,6 +93,7 @@ class Experiment(EnvironmentClass):
         max_steps = 500
         memory_threshold=1000
         memory_buffer = []
+        N = 100
         gamma = 0.9
         epsilon = 1e-8
         lr_1 = 4e-3
@@ -116,26 +117,33 @@ class Experiment(EnvironmentClass):
                 else:
                     memory_buffer.pop(0)
                     
-                    states,actions,rewards,new_states = getMiniBatch(memory_buffer)
+                    states,actions,rewards,new_states = getMiniBatch(memory_buffer,N)
                     ################ **Critting Fitting** ##################
 
                     gamma = 0.9
-                    new_states_actions = createActionNodes(new_states,actor_net).data.numpy()
-                    new_states_q_values = createQValues(new_states,new_states_actions,Critic.CriticNet)
+                    new_states_actions = createActionNodes(new_states,target_actor_net).data.numpy()
+                    new_states_q_values = createQValues(new_states,new_states_actions,target_critic_net)
+
                     targets = rewards + gamma*new_states_q_values
                     Critic.fit(states,actions,targets,w)
 
                     before_weights = netMag(actor_net)
-                    t_before_critic_weights = netMag(Critic.CriticNet)
+                    # t_before_critic_weights = netMag(Critic.CriticNet)
                     ################ **Updating Policy** ##################
                     optimal_action_nodes = createActionNodes(states,actor_net)
                     optimal_q_values = createQValueNodes(states,optimal_action_nodes,Critic.CriticNet)
                     loss = optimal_q_values.mean()
 
                     updateNetwork(optimizer,loss)
+                    ################ **Updating Target Networks** ##################
+                    updateTargetNetwork(Critic.CriticNet,target_critic_net)
+                    updateTargetNetwork(actor_net,target_actor_net)
+                    
                     ################# **Logging** ###################
-                    t_after_critic_weights = netMag(Critic.CriticNet)
-                    t_diff = t_after_critic_weights-t_before_critic_weights
+                    # t_after_critic_weights = netMag(Critic.CriticNet)
+                    # t_diff = t_after_critic_weights-t_before_critic_weights
+
+
                     # w.add_scalar("Advantage",advantage_list.mean(),episode)
                     # w.add_scalar('Loss', total_loss.data[0],episode)
 
@@ -152,7 +160,7 @@ class Experiment(EnvironmentClass):
                     w.add_scalar('Weight Change', abs(before_weights-after_weights),episode)
                     ipdb.set_trace()
                 state = new_state
-        return actor_net
+        return target_actor_net
 
 Lunar = Experiment('Pendulum-v0')
 os.chdir("debug")

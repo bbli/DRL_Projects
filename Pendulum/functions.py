@@ -311,11 +311,10 @@ def createActionNodes(new_states,actor_net):
     new_optimal_actions = actor_net(new_states)
     return new_optimal_actions
 
-def getMiniBatch(memory_buffer):
+def getMiniBatch(memory_buffer,N):
     '''
     returns multiple numpy arrays
     '''
-    N = 100
     states_list = []
     actions_list = []
     rewards_list = []
@@ -335,3 +334,19 @@ def getMiniBatch(memory_buffer):
     rewards_list = np.array(rewards_list)
     rewards_list = np.expand_dims(rewards_list,axis=1)
     return states_list,actions_list,rewards_list,new_states_list
+
+def updateTargetNetwork(net,target_net):
+    tau = 0.95
+    net_state_dict = net.state_dict()
+    target_net_state_dict = target_net.state_dict()
+    # print("Before")
+    # print(target_net_state_dict)
+    for key in net_state_dict:
+        net_tensor = net_state_dict[key]
+        target_net_tensor = target_net_state_dict[key]
+        smoothed_tensor = tau*target_net_tensor+(1-tau)*net_tensor
+
+        target_net_state_dict[key] = smoothed_tensor
+    # print("After")
+    # print(target_net_state_dict)
+        
