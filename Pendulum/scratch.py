@@ -49,19 +49,22 @@ from Environment import *
 # actor_net = ActorNet(2)
 # target_actor_net = ActorNet(2)
 # target_actor_net.load_state_dict(actor_net.state_dict())
+################################################################
 
+# class ActorNet(nn.Module):
+    # def __init__(self,neurons):
+        # super().__init__()
+        # self.fc1 = nn.Linear(8,neurons)
+        # # self.fc2 = nn.Linear(neurons,neurons)
+        # self.final = nn.Linear(neurons,1)
+    # def forward(self,x):
+        # x = F.relu(self.fc1(x)) 
+        # # x = F.relu(self.fc2(x))
+        # x = self.final(x)
+        # return 2*F.tanh(x)
+# Net = ActorNet(10)
+# state = numpyFormat(np.ones(8)).float()
+# output = Net(state)
+################################################################
 
-class ActorNet(nn.Module):
-    def __init__(self,neurons):
-        super().__init__()
-        self.fc1 = nn.Linear(8,neurons)
-        # self.fc2 = nn.Linear(neurons,neurons)
-        self.final = nn.Linear(neurons,1)
-    def forward(self,x):
-        x = F.relu(self.fc1(x)) 
-        # x = F.relu(self.fc2(x))
-        x = self.final(x)
-        return 2*F.tanh(x)
-Net = ActorNet(10)
-state = numpyFormat(np.ones(8)).float()
-output = Net(state)
+Pendulum = EnvironmentClass('Pendulum-v0')

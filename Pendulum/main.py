@@ -1,3 +1,6 @@
+from tensorboardX import SummaryWriter
+import os
+
 from Experiment import *
 
 Pendulum = ExperimentClass('Pendulum-v0')

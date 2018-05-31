@@ -231,5 +231,5 @@ def averageAdamLearningRate(optimizer,epsilon,learn_rate):
 def getContinuousAction(net,state):
     state = numpyFormat(state).float()
     action = net(state).data.numpy()
-    action = action + np.random.normal(scale=0.1)
+    action = action + np.random.normal(scale=0.05)
     return action

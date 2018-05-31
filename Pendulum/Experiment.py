@@ -1,6 +1,4 @@
 import ipdb
-import os
-from tensorboardX import SummaryWriter
 from Environment import *
 
 class ActorNet(nn.Module):
@@ -138,6 +136,7 @@ class ExperimentClass(EnvironmentClass):
                     optimal_action_nodes = createActionNodes(states,actor_net)
                     optimal_q_values = createQValueNodes(states,optimal_action_nodes,Critic.CriticNet)
                     loss = optimal_q_values.mean()
+                    loss = torch.mul(loss,-1)
 
                     updateNetwork(optimizer,loss)
                     ################ **Updating Target Networks** ##################
