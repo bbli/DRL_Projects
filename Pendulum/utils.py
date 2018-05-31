@@ -228,3 +228,8 @@ def averageAdamLearningRate(optimizer,epsilon,learn_rate):
         total_delta_w_list.append(delta_w_tensor.mean())
     total_delta_w_list = np.array([total_delta_w_list])
     return total_delta_w_list.mean()
+def getContinuousAction(net,state):
+    state = numpyFormat(state).float()
+    action = net(state).data.numpy()
+    action = action + np.random.normal(scale=0.1)
+    return action
