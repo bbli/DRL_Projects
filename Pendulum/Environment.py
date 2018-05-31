@@ -9,27 +9,27 @@ class EnvironmentClass():
     def makeEnvironment(self):
         return gym.make(self.environment)
 
-    def tryEnvironment(self):
-        env = gym.make(self.environment)
-        state = env.reset()
-        count =0
-        total_reward = 0
-        while True:
-            count += 1
-            env.render()
-            action=humanInput()
-            if action == 'b':
-                env.close()
-                break
-            state,reward,done,info = env.step(action)
-            total_reward += reward
-            if done == True:
-                print("Number of steps: ",count)
-                print("Reward: ",total_reward)
-                print("Click any key to close the environment")
-                getch.getch()
-                env.close()
-                break
+    # def tryEnvironment(self):
+        # env = gym.make(self.environment)
+        # state = env.reset()
+        # count =0
+        # total_reward = 0
+        # while True:
+            # count += 1
+            # env.render()
+            # action=humanInput()
+            # if action == 'b':
+                # env.close()
+                # break
+            # state,reward,done,info = env.step(action)
+            # total_reward += reward
+            # if done == True:
+                # print("Number of steps: ",count)
+                # print("Reward: ",total_reward)
+                # print("Click any key to close the environment")
+                # getch.getch()
+                # env.close()
+                # break
 
     def showModel(self,model=None):
         # print("This is sampling from the untrained network")
@@ -44,7 +44,7 @@ class EnvironmentClass():
         while True:
             count += 1
             env.render()
-            action=getAction(model,state)
+            action=getContinuousAction(model,state)
             state,reward,done,info = env.step(action)
             # time.sleep(0.1)
             total_reward += reward
@@ -107,7 +107,7 @@ class EnvironmentClass():
         total_reward=0
         while True:
             count += 1
-            action=getAction(net,state)
+            action=getContinuousAction(net,state)
             state,reward,done,info = env.step(action)
             total_reward += reward
             if done == True:
