@@ -39,7 +39,7 @@ class CriticClass():
     def __init__(self,neurons):
         self.CriticNet = CriticNet(neurons)
         self.criterion = nn.MSELoss()
-        self.optimizer = optim.Adam(self.CriticNet.parameters(),lr = 6e-3)
+        self.optimizer = optim.Adam(self.CriticNet.parameters(),lr = 5e-4)
         self.count = 0
     def fit(self,states,actions,targets,w):
         '''
@@ -87,12 +87,12 @@ class ExperimentClass(EnvironmentClass):
         self.current_critic_net = target_critic_net
         ################ **Experiment Hyperparameters** ##################
         num_episodes = 1000
-        max_steps = 500
+        max_steps = 100
         memory_threshold=1000
         memory_buffer = []
         N = 100
         epsilon = 1e-8
-        lr_1 = 4e-3
+        lr_1 = 2e-3
         optimizer = optim.Adam(actor_net.parameters(), lr=lr_1, eps=epsilon)
 
 
