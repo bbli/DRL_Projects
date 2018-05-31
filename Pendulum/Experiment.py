@@ -87,8 +87,8 @@ class ExperimentClass(EnvironmentClass):
         self.current_critic_net = target_critic_net
         ################ **Experiment Hyperparameters** ##################
         num_episodes = 1000
-        max_steps = 100
         memory_threshold=1000
+        ## not max steps is 200
         memory_buffer = []
         N = 100
         epsilon = 1e-8
@@ -96,8 +96,8 @@ class ExperimentClass(EnvironmentClass):
         optimizer = optim.Adam(actor_net.parameters(), lr=lr_1, eps=epsilon)
 
 
-        w.add_text("Environment Parameters","Number of Episodes: {} Max Steps: {}".format(num_episodes,max_steps))
-        w.add_text("Model Parameters","ActorNet Hidden Units: {} CriticNet Hidden Units: {} Adam Learning Rate: {} Memory Size: {} Memory Batch Size: {}".format(actor_neurons,critic_neurons,lr_1,memory_threshold,N))
+        w.add_text("Environment Parameters","Number of Episodes: {} Memory Size: {} Memory Batch Size: {}".format(num_episodes,memory_threshold,N))
+        w.add_text("Model Parameters","ActorNet Hidden Units: {} CriticNet Hidden Units: {} Adam Learning Rate: {} ".format(actor_neurons,critic_neurons,lr_1))
         ################################################################ 
         count = 0
         for episode in range(num_episodes):
@@ -107,7 +107,8 @@ class ExperimentClass(EnvironmentClass):
             ################################################################
             state = env.reset()
             total_reward = 0
-            for steps in range(max_steps):
+            done = False
+            while not done:
                 count +=1
                 ################# **Sampling** ###################
                 action = getContinuousAction(actor_net,state)
@@ -155,7 +156,7 @@ class ExperimentClass(EnvironmentClass):
 
                     after_weights = netMag(actor_net)
                     w.add_scalar('Weight Change', abs(before_weights-after_weights),count)
-                ## 4:inside max step for loop
+                ## 4:inside trajectory for loop
                 state = new_state
             ## 3: inside episode for loop
             w.add_scalar('Reward',total_reward,episode)
