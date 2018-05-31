@@ -295,26 +295,31 @@ def getContinuousAction(net,state):
     action = action + np.random.normal(scale=0.1)
     return action
 
-def applyDDPG(memory_buffer,actor_net):
+def createQValues(new_states,new_states_actions,critic_net):
+    new_states,new_states_actions = numpyFormat(new_states).float(), numpyFormat(new_states_actions).float()
+    q_values = critic_net(new_states,new_states_actions).data.numpy()
+    return q_values
+
+def createQValueNodes(states,action_nodes,critic_net):
+    states = numpyFormat(states).float()
+    q_values = critic_net(states,action_nodes)
+    return q_values
+
+
+def createActionNodes(new_states,actor_net):
+    new_states = numpyFormat(new_states).float()
+    new_optimal_actions = actor_net(new_states)
+    return new_optimal_actions
+
+def getMiniBatch(memory_buffer):
     '''
     returns multiple numpy arrays
     '''
-    states,actions,rewards,new_states = getMiniBatch(memory_buffer)
-    new_optimal_actions = createQStates(new_states,actor_net)
-    targets = rewards + gamma*(critic_net(new_states,new_optimal_actions).data.numpy())
-    ipdb.set_trace()
-
-def createQStates(new_states,actor_net):
-    new_states = numpyFormat(new_states).float()
-    new_optimal_actions = actor_net(new_states)
-
-def getMiniBatch(memory_buffer):
     N = 100
     states_list = []
     actions_list = []
     rewards_list = []
     new_states_list = []
-    ipdb.set_trace()
     memory_buffer_index = np.arange(len(memory_buffer))
     sampled_buffer_index = np.random.choice(memory_buffer_index,N,replace=False)
     for index in sampled_buffer_index:
@@ -323,4 +328,10 @@ def getMiniBatch(memory_buffer):
         actions_list.append(action)
         rewards_list.append(reward)
         new_states_list.append(new_state)
+    states_list = np.array(states_list)
+    new_states_list = np.array(new_states_list)
+    actions_list = np.array(actions_list)
+
+    rewards_list = np.array(rewards_list)
+    rewards_list = np.expand_dims(rewards_list,axis=1)
     return states_list,actions_list,rewards_list,new_states_list

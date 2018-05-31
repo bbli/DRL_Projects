@@ -27,8 +27,8 @@ class CriticNet(nn.Module):
         '''
         Assumes state and action are pytorch variables
         '''
-        x = F.relu(self.fc1(state)) 
         shape = state.shape
+        x = F.relu(self.fc1(state)) 
         if len(shape)>1:
             x = torch.cat((x,action),1)
         else:
@@ -43,16 +43,23 @@ class CriticClass():
         self.criterion = nn.MSELoss()
         self.optimizer = optim.Adam(self.CriticNet.parameters(),lr = 6e-3)
         self.count = 0
-    def fit(self,states,targets,w):
+    def fit(self,states,actions,targets,w):
+        '''
+        Assumes states, actions, and targets are numpy arrays
+        '''
         self.count += 1
         targets = numpyFormat(targets).float()
+        actions = numpyFormat(actions).float()
         states = numpyFormat(states).float()
-        pred = self.CriticNet.forward(states)
+        pred = self.CriticNet.forward(states,actions)
 
         loss = self.criterion(pred,targets)
         w.add_scalar("Critic Loss",loss.data[0],self.count)
 
+        # before_weights = netMag(self.CriticNet)
         updateNetwork(self.optimizer,loss) 
+        # after_weights = netMag(self.CriticNet)
+        # print("Critic Weight Change: ",str(after_weights-before_weights))
 
 
 class Experiment(EnvironmentClass):
@@ -97,10 +104,10 @@ class Experiment(EnvironmentClass):
         for episode in range(num_episodes):
             self.episodeLogger(episode)
             episodePrinter(episode,400)
-            before_weights = netMag(actor_net)
-            ################# **Training** ###################
+        ################################################################
             state = env.reset()
             for steps in range(max_steps):
+                ################# **Sampling** ###################
                 action = getContinuousAction(actor_net,state)
                 new_state, reward, done, info = env.step(action)
                 memory_buffer.append((state,action,reward,new_state))
@@ -108,25 +115,43 @@ class Experiment(EnvironmentClass):
                     pass
                 else:
                     memory_buffer.pop(0)
-                    applyDDPG(memory_buffer,actor_net)
+                    
+                    states,actions,rewards,new_states = getMiniBatch(memory_buffer)
+                    ################ **Critting Fitting** ##################
+
+                    gamma = 0.9
+                    new_states_actions = createActionNodes(new_states,actor_net).data.numpy()
+                    new_states_q_values = createQValues(new_states,new_states_actions,Critic.CriticNet)
+                    targets = rewards + gamma*new_states_q_values
+                    Critic.fit(states,actions,targets,w)
+
+                    before_weights = netMag(actor_net)
+                    t_before_critic_weights = netMag(Critic.CriticNet)
+                    ################ **Updating Policy** ##################
+                    optimal_action_nodes = createActionNodes(states,actor_net)
+                    optimal_q_values = createQValueNodes(states,optimal_action_nodes,Critic.CriticNet)
+                    loss = optimal_q_values.mean()
+
+                    updateNetwork(optimizer,loss)
+                    ################# **Logging** ###################
+                    t_after_critic_weights = netMag(Critic.CriticNet)
+                    t_diff = t_after_critic_weights-t_before_critic_weights
+                    # w.add_scalar("Advantage",advantage_list.mean(),episode)
+                    # w.add_scalar('Loss', total_loss.data[0],episode)
+
+                    # mean_last_advantage = getMeanLastAdvantage(traj_s_r_list,Critic.CriticNet)
+                    # w.add_scalar('Advantage Last',mean_last_advantage,episode)
+
+                    # mean_reward = getMeanTotalReward(traj_s_r_list)
+                    # w.add_scalar('Mean Reward',mean_reward,episode)
+
+                    avg_lr = averageAdamLearningRate(optimizer,epsilon,lr_1)
+                    w.add_scalar('Learning Rate',avg_lr,episode)
+
+                    after_weights = netMag(actor_net)
+                    w.add_scalar('Weight Change', abs(before_weights-after_weights),episode)
+                    ipdb.set_trace()
                 state = new_state
-
-
-            ################# **Logging** ###################
-            # w.add_scalar("Advantage",advantage_list.mean(),episode)
-            # w.add_scalar('Loss', total_loss.data[0],episode)
-
-            # mean_last_advantage = getMeanLastAdvantage(traj_s_r_list,Critic.CriticNet)
-            # w.add_scalar('Advantage Last',mean_last_advantage,episode)
-
-            # mean_reward = getMeanTotalReward(traj_s_r_list)
-            # w.add_scalar('Mean Reward',mean_reward,episode)
-
-            # avg_lr = averageAdamLearningRate(optimizer,epsilon,lr_1)
-            # w.add_scalar('Learning Rate',avg_lr,episode)
-
-            # after_weights = netMag(actor_net)
-            # w.add_scalar('Weight Change', abs(before_weights-after_weights),episode)
         return actor_net
 
 Lunar = Experiment('Pendulum-v0')
