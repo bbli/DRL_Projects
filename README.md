@@ -38,17 +38,17 @@ Pendulum:
 
 ## What I learned
 ### MountainCar
-This was my first time training a regular neural net. So to no suprise, I made a rookie mistake in intializing a overly complex model for this problem. I know this because my loss function would barely improve when I had 4 hidden layers, and because for all the subsequent environments, I achieved sucess with just one or two hidden layers. 
+This was my first time training a regular neural net. So to no surprise, I made a rookie mistake in initializing a overly complex model for this problem. I know this because my loss function would barely improve when I had 4 hidden layers, and because for all the subsequent environments, I achieved success with just one or two hidden layers. 
 
-Because this was the first assigment, I was rather determined to get a working model and got extremely irritated when nothing that I tried worked. Eventually, I got fed up with my guess and check process and instead took time out to learn how to use tensorboard. While I still couldn't sucessfully train a model in the end(I suppose this wasn't a suprise given I only trained for 3 episodes), the tensorboard was a plus, as I end up using it heavily for hyperparameter tuning in the following environments.
+Because this was the first assignment, I was rather determined to get a working model and got extremely irritated when nothing that I tried worked. Eventually, I got fed up with my guess and check process and instead took time out to learn how to use tensorboard. While I still couldn't successfully train a model in the end(I suppose this wasn't a surprise given I only trained for 3 episodes), the tensorboard was a plus, as I end up using it heavily for hyperparameter tuning in the following environments.
 
 ### Frozen Lake
-We were asked to solve this problem using tabular q learning and appromixate q learning. The tabular q learning code was an easy implementation of the q-value bellman backup equations. As for the appromixate q learning, implementation was also fairly straightforward, but unlike the q table code, I was getting 0 rewards when I first ran the code and my weights were blowing up....
+We were asked to solve this problem using tabular q learning and approximate q learning. The tabular q learning code was an easy implementation of the q-value bellman backup equations. As for the approximate q learning, implementation was also fairly straightforward, but unlike the q table code, I was getting 0 rewards when I first ran the code and my weights were blowing up. I eventually figured out that was because of momentum in my optimizer. But while doing so, I realized that if I used a neural net with no hidden units, no nonlinear activations(aka a linear model), no bias terms, no momentum, and initialize all weights to zero, then approximate q learning will be equivalent to tabular q learning, with the weights of the linear model being the q values themselves. The reason we can't include biases is because it will **couple the inputs**, which have already been separated thanks to the one hot encoding. Mathematically speaking, this means that if I update my network based on feeding in one state, all the predictions for the other states will change. 
 
-* linear network -> onehot encoding as perfect nonlinear transformation, equivalence with tabular q learning with no momentum, no hidden layers, 0 weight initalization. 
+Also, one hot encoding seems to be a pretty smart idea when we have a finite state space, as it acts as the nonlinear transformation which **linearizes the space.**.
 
-### Acrobat Problem
-This may be a bit long, as for this environment I actually made a concious effort to track what I did.
+### Acrobat
+This may be a bit long, as for this environment I actually made a conscious effort to track what I did.
 
 In this problem, I first did a basic training of policy gradients with a running baseline, using Adam as my optimizer for 2000 episodes. Suprisingly, I got a pretty decent result of 85 +/- 15 steps to pass the line. So, thinking I could do better, I began hyperparameter tuning, starting first with a grid search through L2 weight decay, number of hidden units, and number of trajectories to average before updating the model. I was hoping the weight Decay would slow down my descent so that the model may explore more and find a more optimal solution, rather than jumping directly to the first solution it found. Same thing with number of trajectories. The fewer trajectories I had, the more random I would be, though too much randomness will make it so I never converge to a solution. But, none of the models produced from grid search produced a model with a mean run of below 80, and all the standard deviations were in the 20's.
 
