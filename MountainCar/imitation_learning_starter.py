@@ -1,13 +1,3 @@
-#==========================================================================  
-# Imitation Learning Starter Code 
-# 
-# The code was initially written for UCSB Deep Reinforcement Learning Seminar 2018
-#
-# Authors: Jieliang (Rodger) Luo, Sam Green
-#
-# April 9th, 2018
-#==========================================================================
-
 import gym
 # import necessary libraries here
 import torch

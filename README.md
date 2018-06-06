@@ -1,8 +1,13 @@
 
-## Frozen Lake Problem
+## Running the Code
+
+
+## What I learned
+### MountainCar
+### Frozen Lake Problem
 We were asked to solve this problem using tabular q learning and appromixate q learning. The tabular q learning was a trivial implementation of the q-value bellman backup equations. 
 
-## Acrobat Problem
+### Acrobat Problem
 In this problem, I first did a basic training of policy gradients with a running baseline, using Adam as my optimizer for 2000 episodes. Suprisingly, I got a pretty decent result of 85 +/- 15 steps to pass the line. So, thinking I could do better, I began hyperparameter tuning, starting first with a grid search through L2 weight decay, number of hidden units, and number of trajectories to average before updating the model. I was hoping the weight Decay would slow down my descent so that the model may explore more and find a more optimal solution, rather than jumping directly to the first solution it found. Same thing with number of trajectories. The fewer trajectories I had, the more random I would be, though too much randomness will make it so I never converge to a solution. But, none of the models produced from grid search produced a model with a mean run of below 80, and all the standard deviations were in the 20's.
 
 I then did a grid search over dropout probablities and hidden units. Furthermore, I decided to employ a 3 optimizers. First I would use Adam so I can get out of the 10e4 loss region. Then I would use SGD with momentum and make the learning rate cyclical, so I can bounce out of spiky regions. I would then return to a fresh Adam, so I can avoid the cache that comes with the previous Adam optimizer, since that one must be huge after shrinking the loss from 3e4 to 100. But, this once again, got me around the same results.
@@ -13,7 +18,7 @@ Finally, I decided to use the network with the smallest average_runs as a starti
 
 * So SGD was prone to blow up, which was why Adam was better
 
-## Lunar Lander
+### Lunar Lander
 * realized that shallow networks are better, at least for policy gradients, because deeper networks tend to get stuck in local mins.
 * I think that until I can get the advantage to be positive, I will never get a good solution
 

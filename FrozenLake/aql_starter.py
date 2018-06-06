@@ -1,13 +1,3 @@
-#==========================================================================  
-# Approximate Q-Learning Starter Code 
-# 
-# The code was initially written for UCSB Deep Reinforcement Learning Seminar 2018
-#
-# Authors: Jieliang (Rodger) Luo, Sam Green
-#
-# April 11th, 2018
-#==========================================================================
-
 import gym
 import numpy as np
 import random
