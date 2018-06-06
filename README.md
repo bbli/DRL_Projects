@@ -67,26 +67,12 @@ Finally, I decided to use the network with the smallest average_runs as a starti
 (Standard deviation obtained from running each combination 100 times)
 
 ### Lunar Lander
-**Baseline**
-* realized that shallow networks are better, at least for policy gradients, because deeper networks tend to get stuck in local mins.
-    * single layer works better, even though I have been told single layer just remembers-> no issue for just one environment right? -> Same as Adam>SGD
-* solved the environment(209+50), even though I didn't expect it to because it was too "simple" of a model...my mixed policy trick help immensely here, as without it, final model will only reach a mean of 85.
-
-* Experiment/Environment classes
-    * Experiment for hyperparameter tuning and logging
-    * Environment for evaluation and display
-
-**Actor Critic**
-* I think that until I can get the advantage to be positive, I will never get a good solution -> actually had to increase learning rate, which I was wary about because it may cause overfitting.
-* high learning rate cause probablity to go to one
-* dividing reward by 10 so critic doesn't chase the outlier
 
 Although this wasn't assigned for class, I decided to use this environment to test out actor-critic instead of Acrobot, since I already got rather a rather optimal result from just policy gradients with baseline(the model moved the joint to the desired height in less than a second). But before implementating the batch actor-critic algorithm, I decided to train a baseline model on this environment as a control case. Furthermore, I finished implementating my abstract Environment and Experiment classes, which I had started in the Acrobot project. The purpose of the Environment class is to provide functionality for evaluating and displaying models, and the Experiment class is where the training algorithm lives. Before, the training algorithm was inside a function, which I called for hyperparameter tuning. The issue with this is that I have lost most of the state informationinside, as the function only returns the trained model. And seeing as state is crucial for debugging, I put this function inside the method of a class so that I can "log" desired variables as attributes of the Experiment object.
 
 Because I thought this environment was more complex, I started the neural net out at 2 hidden layers rather than one. But, much to my dismay, these neural nets performed horribly, barely acheiving a positive evaluation reward. Once I changed back to one hidden layer, the reward skyrocketed to 80. I found this suprising, because I have been told that more hidden layers and less neurons per layer were better than vice versa, as the latter tends to "remember" datapoints and so has poor generalization. But I suppose I don't need to generalize in this scenario, as I am always training in the same environment. Also, another training tip from supervised learning that doesn't seem to be true in reinforcement learning is SGD with momentum being better then Adam, since Adam is prone to overfitting. But in practice, Adam has always worked out better for me in this environments, probably for the same reason that shallow nets do; because I don't need to generalize. And using my **mixed policy trick from above on top of a shallow net**, I even managed to solve the environment, getting a mean evaluation reward of 209!
 
-### Pendulum
+Actor Critic didn't fare so well. One issue I found was that the advantage would always approach zero from the negative side, and never go above 0. A negative advantage means we are updating via a process of elimination method, which I wasn't a big fan of back in the Acrobot environment. So to get the critic net to output a positive advantage, I increased **its learning rate**. While this did indeed give me a positive advantage for a portion of the training, my end result wasn't much better. Next, after looking at the reward distribution, I decided to **divide all rewards by 10**, because the terminal state reward was often -100, and so I believed the critic net was chasing this outlier, runining my fit. This also led me to suspect another issue with the critic net. It's priority, at least when used bootstrapped estimates, is to minimize the difference between the target and the next state, not to get accurate state values. So if the critic kept all the state values near zero except on the terminal state, the mean squared error will be rather low, since non terminal state rewards are small. Based on this, I changed to **Monte Carlo for my state estimates** so the critic will actually fit the state values. Unfortunately, I did not see any marginal gains from doing so.
 
-* pretty much followed paper, with target networks, memory buffer, etc.
-* tensorboard's inability to search well
-* tbh, how do people get actor critic to even work -> point on my concerns, on top of the overfitting problem above.
+### Pendulum
+For this environment, I implemented the full DDPG algorithm with target networks, memory buffer, etc. The only thing that differs from the [paper](https://arxiv.org/pdf/1509.02971.pdf) is that I did not code up is the Ornstein-Uhlenbeck process, because I did not have the time to go on wikipedia and learn about it, and I did not want to copy someone else's code. And, as somewhat expected, the base algorithm performed horribly. Perhaps there is somewhat lacking in my actor-critic knowledge, but I honestly have a hard time believing that such algorithms can work without a much of work tuning. One issue is that if we don't sample enough, the critic may be fitting Q values instead of state values. And if the critic is too complex, then it will overfit too fast and the advantage will be zero, meaning the policy won't update anymore, and so the model will get stuck in local minimums quite often. Anyways, guess I should learn more about the theory first.
