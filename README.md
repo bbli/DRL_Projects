@@ -1,5 +1,23 @@
 
-## Running the Code
+## Running the Models
+Acrobot:
+`python Acrobot/visualize.py`
+LunarLander:
+`python LunarLander/visualize.py`
+
+For the MountainCar, Pendulum, and FrozenLake environments, I did not save trained models. The former two because I couldn't get a respectable result after training, and the latter because it was fairly fast to train and not much hyperparameter tuning was nesscary. The following are the corresponding scripts to run my current machine learning algorithm, for all environments.
+
+MountainCar:
+`python MountainCar/imitation_learning_starter.py`
+FrozenLake:
+`python FrozenLake/aql_starter.py`
+Acrobot:
+`python Acrobot/pg_starter.py`
+LunarLander:
+`python LunarLander/baseline_main.py`
+`python LunarLander/actor_main.py`
+Pendulum:
+`python Pendulum/main.py`
 
 
 ## What I learned
@@ -23,3 +41,5 @@ Finally, I decided to use the network with the smallest average_runs as a starti
 * I think that until I can get the advantage to be positive, I will never get a good solution
 
 * realized that target networks give you the best of both worlds: getting out of local min of high learning rates, and slow and steady upward progress of small learning rate
+
+### Pendulum
