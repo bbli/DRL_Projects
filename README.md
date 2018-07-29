@@ -1,7 +1,5 @@
 # README
 ---
-## Intro
-This is all the code that I wrote for the deep reinforcement learning class I took in my last quarter at UCSB.
 ## Running the Models
 Acrobot:
 
